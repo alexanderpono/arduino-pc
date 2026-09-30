@@ -10,12 +10,12 @@ export class Ws {
 
     onConnect = (wsClient) => {
         this.wsClient = wsClient;
-        console.log('Ws: Новый пользователь');
-        this.wsClient.send(JSON.stringify({ fromServer: 'Привет' }));
+        console.log('Ws: A new user');
+        this.wsClient.send(JSON.stringify({ fromServer: 'Hello' }));
         this.wsClient.on('message', this.onMessage);
 
         this.wsClient.on('close', function () {
-            console.log('Ws: Пользователь отключился');
+            console.log('Ws: User disconnected');
         });
     };
 

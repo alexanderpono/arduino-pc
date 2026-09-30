@@ -1,14 +1,9 @@
 import express from 'express';
 import morgan from 'morgan';
 
-export interface RestController {
-    onRestGetLight: (req, res) => void;
-    onRestPutLight: (req, res) => void;
-    onRestGetReset: (req, res) => void;
-}
 export class RestServer {
     private app;
-    constructor(private port: number, private ctrl: RestController) {}
+    constructor(private port: number) {}
 
     run = () => {
         this.app = express();
@@ -44,9 +39,6 @@ export class RestServer {
                 }
             )
         );
-        this.app.get('/api/rgb', this.ctrl.onRestGetLight);
-        this.app.put('/api/rgb', this.ctrl.onRestPutLight);
-        this.app.post('/api/reset', this.ctrl.onRestGetReset);
 
         this.app.listen(this.port);
     };
