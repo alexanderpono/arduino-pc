@@ -18,11 +18,162 @@ int tickReading;
 #define BACK_SLASH 2
 #define BACK_SLASH_COLOR 3
 #define BACK_SLASH_BG_COLOR 4
+#define BACK_SLASH_WIN 5
+#define BACK_SLASH_WIN_POS 6
+#define BACK_SLASH_WIN_POSY 7
+
+#define NUMBER_9 2
+#define NUMBER_2 3
+#define NUMBER_9N 4
+#define NUMBER_2N 5
+#define NUMBER_2NN 6
+#define PARSE_ERROR 255
+#define PARSE_IN_PROGRESS 0
+#define PARSE_SUCCESS 1
+
 byte SerialAPIController::state = WORKING;
+byte numberParseState = WORKING;
+byte numberParseResult = 0;
+byte numberParseGoodFinish = ',';
+byte param1 = 0;
 
 static const unsigned char UNSUPPORTED_COMMAND[]            PROGMEM = "unsupported command: '\\";
 
+void prepareParseNumber(byte goodFinish) {
+    numberParseState = WORKING;
+    numberParseResult = 0;
+    numberParseGoodFinish = goodFinish;
+}
+byte parseNumber() {
+    if (numberParseState == WORKING) {
+        switch (myNumber)
+        {
+        case '0':
+        case '1':
+        case '2':
+            numberParseState = NUMBER_2;
+            numberParseResult = numberParseResult * 10 + (myNumber - '0');
+            break;
 
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            numberParseState = NUMBER_9;
+            numberParseResult = numberParseResult * 10 + (myNumber - '0');
+            break;
+
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    } else if (numberParseState == NUMBER_2) {
+        if (myNumber == numberParseGoodFinish) {
+            numberParseState = WORKING;
+            return PARSE_SUCCESS;
+        }
+        switch (myNumber)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            numberParseState = NUMBER_2N;
+            numberParseResult = numberParseResult * 10 + (myNumber - '0');
+            break;
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    } else if (numberParseState == NUMBER_9) {
+        if (myNumber == numberParseGoodFinish) {
+            numberParseState = WORKING;
+            return PARSE_SUCCESS;
+        }
+        switch (myNumber)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            numberParseState = NUMBER_9N;
+            numberParseResult = numberParseResult * 10 + (myNumber - '0');
+            break;
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    } else if (numberParseState == NUMBER_2N) {
+        if (myNumber == numberParseGoodFinish) {
+            numberParseState = WORKING;
+            return PARSE_SUCCESS;
+        }
+        switch (myNumber)
+        {
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+            numberParseState = NUMBER_2NN;
+            numberParseResult = numberParseResult * 10 + (myNumber - '0');
+            break;
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    } else if (numberParseState == NUMBER_2NN) {
+        if (myNumber == numberParseGoodFinish) {
+            numberParseState = WORKING;
+            return PARSE_SUCCESS;
+        }
+        switch (myNumber)
+        {
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    } else if (numberParseState == NUMBER_9N) {
+        if (myNumber == numberParseGoodFinish) {
+            numberParseState = WORKING;
+            return PARSE_SUCCESS;
+        }
+        switch (myNumber)
+        {
+        default:
+            numberParseState = WORKING;
+            return PARSE_ERROR;
+            break;
+        }
+    }
+
+    return PARSE_IN_PROGRESS;
+}
 
 void printmsg(const unsigned char *msg) {
   while (pgm_read_byte(msg) != 0) {
@@ -107,9 +258,14 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.println(F("\\b2 - set bg color 2"));
                 Serial.println(F("\\b3 - set bg color 3"));
                 Serial.println(F("\\cl - clear screen"));
+                Serial.println(F("\\wp255,255; - text window position at pixels (x 0..159, y 0..40)"));
                 state = WORKING;
                 break;
 
+            case 'w':
+                state = BACK_SLASH_WIN;
+                break;
+                
             default:
                 Serial.print(F("unsupported command: '\\"));
                 Serial.print(String((char)myNumber));
@@ -196,8 +352,51 @@ void SerialAPIController::processSerialInputsUsingTick()
                 break;
             }
 
+        } else if (state == BACK_SLASH_WIN) {
+            switch (myNumber)
+            {
+            case 'p':
+                state = BACK_SLASH_WIN_POS;
+                prepareParseNumber(',');
+                break;
+
+            default:
+                Serial.print(F("unsupported command: '\\w"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_WIN_POS) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_WIN_POSY;
+                param1 = numberParseResult;
+                prepareParseNumber(';');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_WIN_POSY) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = WORKING;
+                screen.screenTargetXY(param1, numberParseResult);
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String(param1));
+                Serial.print(",");
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
         }
-        
     }
     else
     {

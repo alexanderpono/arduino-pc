@@ -153,17 +153,18 @@ void setup() {
 
   vga.begin();
   vga.copy((byte*)img_guyelaine_data);
-  graph.draw_rect(0,0,66,35,YELLOW,BLACK);
+  graph.draw_rect(0,0,66,37,YELLOW,BLACK);
+  screen.setColor(RED);
   String topLine    = "0000000000000";
   String middleLine = "0           0";
   String line3      = "1234567890123";
-  screen.println(topLine);
-  screen.println(middleLine);
-  screen.setColor(GREEN);
+  screen.print(topLine);
+  screen.print(middleLine);
   screen.dump();
   
-  screen.println(line3);
-  screen.println(line3);
+  screen.setColor(GREEN);
+  screen.print(line3);
+  screen.print(line3);
   screen.dump();
 
   screen.setColor(RED);

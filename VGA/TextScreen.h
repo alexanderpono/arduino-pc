@@ -39,9 +39,16 @@ public:
     static void scrollUp();
     static void returnCaret();
     static void backspace();
+    static byte textXToScreenX(byte textX);
+    static byte textYToScreenY(byte textY);
+    static void screenTargetXY(byte x, byte y);
 
+    static byte windowW;
+    static byte windowH;
     static byte cursorX;
     static byte cursorY;
+    static byte screenTargetX;
+    static byte screenTargetY;
     static boolean isInitialDraw;
     static byte colorMain;
     static byte bgColor;

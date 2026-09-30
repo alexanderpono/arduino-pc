@@ -26,6 +26,8 @@ Baud rate 9600
 \b2 - set bg color 2
 \b3 - set bg color 3
 \cl - clear screen
+\wp255,255; - text window position at pixels (x 0..159, y 0..40)
+
 ```
 
 ## Example
