@@ -1,7 +1,10 @@
 import { combineReducers } from 'redux';
 import { createStore } from 'redux';
+import { appReducer } from './appReducer';
 
-export const reducerAll = combineReducers({});
+export const reducerAll = combineReducers({
+    app: appReducer
+});
 
 export interface AppState {}
 

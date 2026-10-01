@@ -17,10 +17,10 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": [ "src/components"  ],
+  "include": [ "src", "custom.d.ts"  ],
   "exclude": [
     "node_modules",
     "**/*.spec.ts",
     "**/*.test.ts"
-  ]  
+  ]
 }

@@ -1,6 +1,5 @@
-interface MainControllerForWs {
-    onWsMesage: (msg: string) => void;
-}
+import { MainControllerForWs } from '@src/ServerController.types';
+
 export class Ws {
     private wsClient;
 
@@ -11,8 +10,9 @@ export class Ws {
     onConnect = (wsClient) => {
         this.wsClient = wsClient;
         console.log('Ws: A new user');
-        this.wsClient.send(JSON.stringify({ fromServer: 'Hello' }));
+        this.wsClient.send(JSON.stringify({ message: 'Hello' }));
         this.wsClient.on('message', this.onMessage);
+        this.ctrl.onWsConnect();
 
         this.wsClient.on('close', function () {
             console.log('Ws: User disconnected');

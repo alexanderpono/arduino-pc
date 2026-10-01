@@ -1,11 +1,11 @@
 import { autoDetect } from '@serialport/bindings-cpp';
+import { MainControllerForSerial } from '@src/ServerController.types';
 import { SerialPort } from 'serialport';
 
-interface MainControllerForSerial {
-    onMessageFromSerial: (msg: string) => void;
-}
 export class Serial {
     private port: SerialPort | null = null;
+
+    private messageBuffer = '';
 
     constructor(private ctrl: MainControllerForSerial) {
         this.main();
@@ -30,21 +30,41 @@ export class Serial {
             console.log('Serial: Error: ', err.message);
         });
 
+        this.port.on('open', () => {
+            this.ctrl.onPortOpened();
+        });
+
         this.port.on('readable', () => {
-            const dataBuffer = (this.port as SerialPort).read();
-            const text = dataBuffer.toString('utf8').trim();
-            this.ctrl.onMessageFromSerial(text);
+            let data: Buffer | string | null;
+            while ((data = (this.port as SerialPort).read()) !== null) {
+                this.messageBuffer += data.toString('utf8');
+
+                let newlineIndex: number;
+                while ((newlineIndex = this.messageBuffer.indexOf('\n')) !== -1) {
+                    const text = this.messageBuffer.substring(0, newlineIndex).trim();
+                    this.messageBuffer = this.messageBuffer.substring(newlineIndex + 1);
+                    if (text.length > 0) {
+                        this.ctrl.onMessageFromSerial(text + '\n');
+                    }
+                }
+            }
         });
     }
     async getPort(): Promise<string> {
         const ports = await autoDetect().list();
-        const port = ports.find((port) => {
-            return /USB/i.test(port.pnpId as string)
+        console.log('getPort() ports=', ports);
+        const availablePorts = ports.filter((port) => {
+            if (!port.pnpId) {
+                return false;
+            }
+            return /USB/i.test(port.pnpId);
         });
-        if (!port) {
+        console.log('getPort() availablePorts=', availablePorts);
+        if (availablePorts.length < 1) {
             return Promise.reject(false);
         }
-        return port.path;
+        console.log('getPort() port=', availablePorts[0]);
+        return availablePorts[0].path;
     }
 
     send = (msg: string) => {

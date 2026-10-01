@@ -1,20 +1,24 @@
+import { AppControllerForUI } from '@src/AppController.types';
+import { AppState } from '@src/appReducer';
+import { toMMSS } from '@src/util';
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
-const addZeros = (val: number): string => `${val < 1 ? '00' : val < 10 ? '0' + val : val}`;
+interface AppProps {
+    ctrl: AppControllerForUI;
+}
 
-const toMMSS = (sec: number) => {
-    const mm = Math.floor(sec / 60);
-    const ss = sec % 60;
-    return `${addZeros(mm)}:${addZeros(ss)}`;
-};
+const selectVgaAnswers = (state: { app: AppState }) => state.app.vgaAnswers;
+const selectIsVgaReady = (state: { app: AppState }) => state.app.isVgaReady;
 
-export const App: React.FC = () => {
+export const App: React.FC<AppProps> = ({ ctrl }) => {
     const [command, setCommand] = useState<string>('');
     const [timer, setTimer] = useState<number>(0);
+    const vgaAnswers = useSelector(selectVgaAnswers);
+    const isVgaReady = useSelector(selectIsVgaReady);
 
     useEffect(() => {
-        console.log('App::onMount()');
-        createWs();
+        ctrl.onAppMount();
 
         setTimeout(() => {
             // wsClearScreen();
@@ -28,10 +32,7 @@ export const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        // wsSend('\\cl' + toMMSS(timer));
-        // const color = (timer % 3) + 1;
-        // wsSend('\\c' + color + toMMSS(timer) + '\\n');
-        // wsSend(toMMSS(timer) + '\\n');
+        ctrl.onTimer(timer);
     }, [timer]);
 
     const onCommandChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,73 +40,23 @@ export const App: React.FC = () => {
     };
 
     const wsSendCommand = () => {
-        wsSend(command);
+        ctrl.wsSend(command);
     };
 
     return (
         <div>
-            <p>App!</p>
+            <p>VGA: {isVgaReady ? 'Ready' : 'Waiting...'}</p>
             <div>
                 Command: <input type="text" value={command} onChange={onCommandChange}></input>
                 <button onClick={wsSendCommand}>Send to VGA</button>
             </div>
             <div>
-                <textarea id="VGA-answers" rows={30} cols={50} />
+                <textarea id="VGA-answers" rows={30} cols={50} value={vgaAnswers} readOnly />
             </div>
             <div>
-                <button onClick={wsClearScreen}>Clear screen \cl</button>
-            </div>
-            <div>
-                <button onClick={wsRed}>SET RGB=RED</button>
-            </div>
-            <div>
-                <button onClick={wsGreen}>SET RGB=GREEN</button>
+                <button onClick={ctrl.wsClearScreen}>Clear screen \cl</button>
             </div>
             <div>Timer: {toMMSS(timer)}</div>
         </div>
     );
 };
-
-let myWs: WebSocket;
-
-function createWs() {
-    myWs = new WebSocket('ws://localhost:3000');
-    myWs.onopen = function () {
-        console.log('connected');
-    };
-    myWs.onmessage = function (message) {
-        console.log('%s', message.data);
-        const answersEl = document.getElementById('VGA-answers');
-        if (answersEl) {
-            (answersEl as HTMLInputElement).value += `${message.data}`;
-        }
-    };
-
-    myWs.onclose = function () {
-        console.log('disconnected. Autoconnect in 5 s...');
-        setTimeout(() => {
-            console.log('Trying to connect to WS');
-            createWs();
-        }, 5000);
-    };
-}
-
-function wsSend(text: string) {
-    if (myWs.readyState === WebSocket.OPEN) {
-        myWs.send(JSON.stringify({ action: 'TO_SERIAL', data: text }));
-    } else {
-        console.warn('WebSocket is not connected');
-    }
-}
-
-function wsClearScreen() {
-    myWs.send(JSON.stringify({ action: 'TO_SERIAL', data: '\\cl' }));
-}
-
-function wsRed() {
-    myWs.send(JSON.stringify({ action: 'TO_SERIAL', data: '1,255,0,0' }));
-}
-
-function wsGreen() {
-    myWs.send(JSON.stringify({ action: 'TO_SERIAL', data: '1,0,255,0' }));
-}
