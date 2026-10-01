@@ -17,10 +17,11 @@ int tickReading;
 #define WORKING 1
 #define BACK_SLASH 2
 #define BACK_SLASH_COLOR 3
-#define BACK_SLASH_BG_COLOR 4
+#define BACK_SLASH_B 4
 #define BACK_SLASH_WIN 5
-#define BACK_SLASH_WIN_POS 6
+#define BACK_SLASH_WIN_POSX 6
 #define BACK_SLASH_WIN_POSY 7
+#define BACK_SLASH_DEVICE 8
 
 #define NUMBER_9 2
 #define NUMBER_2 3
@@ -230,35 +231,32 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
 
-            case 'd':
-                screen.backspace();
-                state = WORKING;
-                break;
-
             case 'c':
                 state = BACK_SLASH_COLOR;
                 break;
 
             case 'b':
-                state = BACK_SLASH_BG_COLOR;
+                state = BACK_SLASH_B;
+                break;
+
+            case 'd':
+                state = BACK_SLASH_DEVICE;
                 break;
 
             case 'h':
                 Serial.println(F("\\h - this help"));
-                Serial.println(F("\\r - return caret"));
-                Serial.println(F("\\n - new line"));
-                Serial.println(F("\\\\ - input \\"));
-                Serial.println(F("\\d - backspace"));
-                Serial.println(F("\\c0 - set text color 0"));
-                Serial.println(F("\\c1 - set text color 1"));
-                Serial.println(F("\\c2 - set text color 2"));
-                Serial.println(F("\\c3 - set text color 3"));
-                Serial.println(F("\\b0 - set bg color 0"));
-                Serial.println(F("\\b1 - set bg color 1"));
-                Serial.println(F("\\b2 - set bg color 2"));
-                Serial.println(F("\\b3 - set bg color 3"));
+                Serial.println(F("\\r - send return caret"));
+                Serial.println(F("\\n - send new line"));
+                Serial.println(F("\\\\ - send \\"));
+                Serial.println(F("\\bs - send backspace"));
+                Serial.println(F("\\c[0..3] - set text color 0/1/2/3. Example: \\c0"));
+                Serial.println(F("\\b[0..3] - set bg color 0/1/2/3. Example: \\b0"));
                 Serial.println(F("\\cl - clear screen"));
-                Serial.println(F("\\wp255,255; - text window position at pixels (x 0..159, y 0..40)"));
+                Serial.println(F("\\wp255,255; - set text window position at pixels (x 0..159, y 0..40)"));
+                Serial.println(F("\\dt - get device type"));
+                Serial.println(F("\\di - get device ID"));
+                Serial.println(F("\\dv - get device version"));
+                Serial.println(F("\\dc - get device capabilities"));
                 state = WORKING;
                 break;
 
@@ -316,7 +314,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 break;
             }
 
-        } else if (state == BACK_SLASH_BG_COLOR) {
+        } else if (state == BACK_SLASH_B) {
             switch (myNumber)
             {
             case '1':
@@ -343,6 +341,11 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
 
+            case 's':
+                screen.backspace();
+                state = WORKING;
+                break;
+
             default:
                 Serial.print(F("unsupported command: '\\b"));
                 Serial.print(String((char)myNumber));
@@ -356,7 +359,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             switch (myNumber)
             {
             case 'p':
-                state = BACK_SLASH_WIN_POS;
+                state = BACK_SLASH_WIN_POSX;
                 prepareParseNumber(',');
                 break;
 
@@ -367,7 +370,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
             }
-        } else if (state == BACK_SLASH_WIN_POS) {
+        } else if (state == BACK_SLASH_WIN_POSX) {
             byte parseCode = parseNumber();
             if (parseCode == PARSE_SUCCESS) {
                 state = BACK_SLASH_WIN_POSY;
@@ -395,6 +398,48 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;
+            }
+        } else if (state == BACK_SLASH_DEVICE) {
+            switch (myNumber)
+            {
+            case 't':
+                Serial.println(F("VGA"));
+                state = WORKING;
+                break;
+
+            case 'i':
+                Serial.println(F("001"));
+                state = WORKING;
+                break;
+
+            case 'v':
+                Serial.print(F("VGAX."));
+                Serial.print(F(VGAX_VERSION));
+                Serial.println(F(".Serial.0.1.0"));
+                state = WORKING;
+                break;
+
+            case 'c':
+                Serial.print(F("w:"));
+                Serial.print(String(VGAX_WIDTH));
+                Serial.print(F(",h:"));
+                Serial.print(String(VGAX_HEIGHT));
+                Serial.print(F(",bpp:"));
+                Serial.print(String(2));
+                Serial.print(F(",tw:"));
+                Serial.print(String(TXT_SCREEN_W));
+                Serial.print(F(",th:"));
+                Serial.print(String(TXT_SCREEN_H));
+                Serial.println(F(""));
+                state = WORKING;
+                break;
+
+            default:
+                Serial.print(F("unsupported command: '\\d"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
             }
         }
     }

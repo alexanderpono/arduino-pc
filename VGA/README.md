@@ -13,20 +13,19 @@ Baud rate 9600
 
 ```
 \h - this help
-\r - return caret
-\n - new line
-\\ - input \
-\d - backspace
-\c0 - set text color 0
-\c1 - set text color 1
-\c2 - set text color 2
-\c3 - set text color 3
-\b0 - set bg color 0
-\b1 - set bg color 1
-\b2 - set bg color 2
-\b3 - set bg color 3
+\r - send return caret
+\n - send new line
+\\ - send \
+\bs - send backspace
+\c[0..3] - set text color 0/1/2/3. Example: \c0
+\b[0..3] - set bg color 0/1/2/3. Example: \b0
 \cl - clear screen
-\wp255,255; - text window position at pixels (x 0..159, y 0..40)
+\wp255,255; - set text window position at pixels (x 0..159, y 0..40)
+\dt - get device type
+\di - get device ID
+\dv - get device version
+\dc - get device capabilities
+
 
 ```
 
