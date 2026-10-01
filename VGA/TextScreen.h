@@ -14,6 +14,11 @@
 #define COLOR_2 2
 #define COLOR_3 3
 
+#define RED COLOR_2
+#define GREEN COLOR_1
+#define YELLOW COLOR_3
+#define BLACK COLOR_BLACK
+
 void vgaPrintAscii(byte number, byte x, byte y, byte color);
 
 class TextScreen

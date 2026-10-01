@@ -143,11 +143,6 @@ TextScreen screen;
 VGAXUtils graph;
 SerialAPIController serialAPICtrl;
 
-#define RED COLOR_1
-#define GREEN COLOR_2
-#define YELLOW COLOR_3
-#define BLACK COLOR_BLACK
-
 void setup() {
   Serial.begin(9600); 
 

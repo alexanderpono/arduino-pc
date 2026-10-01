@@ -17,7 +17,7 @@ export const App: React.FC = () => {
         createWs();
 
         setTimeout(() => {
-            wsClearScreen();
+            // wsClearScreen();
         }, 1000);
 
         const interval = setInterval(() => {
@@ -28,7 +28,10 @@ export const App: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        wsSend('\\cl' + toMMSS(timer));
+        // wsSend('\\cl' + toMMSS(timer));
+        // const color = (timer % 3) + 1;
+        // wsSend('\\c' + color + toMMSS(timer) + '\\n');
+        // wsSend(toMMSS(timer) + '\\n');
     }, [timer]);
 
     const onCommandChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
