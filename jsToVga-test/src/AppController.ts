@@ -1,4 +1,4 @@
-import { Device, WsMessage, WsMsgDeviceFound } from './app.types';
+import { createWsMessage, Device, WsMessage, WsMsgDeviceFound } from './app.types';
 import { AppControllerForUI } from './AppController.types';
 import { AppStateManager } from './AppStateManager';
 import { toMMSS } from './util';
@@ -29,9 +29,11 @@ const defaultWS: IWebSocket = {
 export class AppController implements AppControllerForUI {
     private myWs: IWebSocket = defaultWS;
     private appSTM: AppStateManager;
+    private vgaDeviceId: string;
 
     constructor() {
         this.appSTM = AppStateManager.create();
+        this.vgaDeviceId = '';
     }
 
     onAppMount = () => {
@@ -48,17 +50,19 @@ export class AppController implements AppControllerForUI {
             caps: msgDeviceFound.caps
         };
         if (devices.findIndex((d) => d.id === newDevice?.id) >= 0) {
-            return;
+        } else {
+            this.appSTM.devices([...devices, newDevice]);
         }
-        this.appSTM.devices([...devices, newDevice]);
         if (newDevice.type === 'VGA') {
             this.appSTM.isVgaReady(true);
+            this.vgaDeviceId = newDevice.id;
             this.onVGAReady();
         }
     };
 
     onVGAReady = () => {
-        this.wsSend('\\cl');
+        console.log('onVGAReady()');
+        this.wsSendToVGA('Message to VGA');
     };
 
     onWsMessage = (message: WsMessage) => {
@@ -95,6 +99,16 @@ export class AppController implements AppControllerForUI {
         };
     }
 
+    wsSendToVGA(text: string) {
+        if (this.myWs.readyState === WebSocket.OPEN) {
+            const message = JSON.stringify(createWsMessage(this.vgaDeviceId, text));
+            console.log('OUT: ', message);
+            this.myWs.send(message);
+        } else {
+            console.warn('WebSocket is not connected');
+        }
+    }
+
     wsSend(text: string) {
         if (this.myWs.readyState === WebSocket.OPEN) {
             this.myWs.send(JSON.stringify({ action: 'TO_SERIAL', data: text }));
@@ -112,6 +126,6 @@ export class AppController implements AppControllerForUI {
         // const color = (timer % 3) + 1;
         // wsSend('\\c' + color + toMMSS(timer) + '\\n');
         // this.wsSend(toMMSS(timer) + '\\n');
-        this.wsSend('\\r' + toMMSS(timer));
+        // this.wsSend('\\r' + toMMSS(timer));
     };
 }

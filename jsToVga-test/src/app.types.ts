@@ -20,3 +20,15 @@ export interface WsMsgDeviceFound {
     id: string;
     caps: string;
 }
+
+export interface WsMessageToDevice {
+    action: 'TO_SERIAL';
+    deviceId: string;
+    data: string;
+}
+
+export const createWsMessage = (deviceId: string, data: string): WsMessageToDevice => ({
+    action: 'TO_SERIAL',
+    deviceId,
+    data
+});
