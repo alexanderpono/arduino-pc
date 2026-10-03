@@ -29,6 +29,7 @@ describe('AppStateManager', () => {
             ${'devices'}          | ${rndDevices} | ${null} | ${app.devices(rndDevices)}
             ${'vgaAnswers'}       | ${rndStr}     | ${null} | ${app.vgaAnswers(rndStr)}
             ${'setAppIsVgaReady'} | ${rndBool}    | ${null} | ${app.isVgaReady(rndBool)}
+            ${'setAppIsKbReady'}  | ${rndBool}    | ${null} | ${app.isKbReady(rndBool)}
         `('$method() calls store.dispatch', ({ method, param1, param2, expected }) => {
             dispatchMock.mockClear();
 

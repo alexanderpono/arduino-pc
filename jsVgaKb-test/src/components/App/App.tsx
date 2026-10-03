@@ -10,12 +10,14 @@ interface AppProps {
 
 const selectVgaAnswers = (state: { app: AppState }) => state.app.vgaAnswers;
 const selectIsVgaReady = (state: { app: AppState }) => state.app.isVgaReady;
+const selectIsKbReady = (state: { app: AppState }) => state.app.isKbReady;
 
 export const App: React.FC<AppProps> = ({ ctrl }) => {
     const [command, setCommand] = useState<string>('');
     const [timer, setTimer] = useState<number>(0);
     const vgaAnswers = useSelector(selectVgaAnswers);
     const isVgaReady = useSelector(selectIsVgaReady);
+    const isKbReady = useSelector(selectIsKbReady);
 
     useEffect(() => {
         ctrl.onAppMount();
@@ -46,6 +48,7 @@ export const App: React.FC<AppProps> = ({ ctrl }) => {
     return (
         <div>
             <p>VGA: {isVgaReady ? 'Ready' : 'Waiting...'}</p>
+            <p>Keyboard: {isKbReady ? 'Ready' : 'Waiting...'}</p>
             <div>
                 Command: <input type="text" value={command} onChange={onCommandChange}></input>
                 <button onClick={wsSendCommand}>Send to VGA</button>

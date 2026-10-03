@@ -30,10 +30,12 @@ export class AppController implements AppControllerForUI {
     private myWs: IWebSocket = defaultWS;
     private appSTM: AppStateManager;
     private vgaDeviceId: string;
+    private kbDeviceId: string;
 
     constructor() {
         this.appSTM = AppStateManager.create();
         this.vgaDeviceId = '';
+        this.kbDeviceId = '';
     }
 
     onAppMount = () => {
@@ -58,11 +60,20 @@ export class AppController implements AppControllerForUI {
             this.vgaDeviceId = newDevice.id;
             this.onVGAReady();
         }
+        if (newDevice.type === 'KB') {
+            this.appSTM.isKbReady(true);
+            this.kbDeviceId = newDevice.id;
+            this.onKBReady();
+        }
     };
 
     onVGAReady = () => {
         console.log('onVGAReady()');
         this.wsSendToVGA('Message to VGA');
+    };
+
+    onKBReady = () => {
+        console.log('onKBReady()');
     };
 
     onWsMessage = (message: WsMessage) => {
@@ -79,8 +90,48 @@ export class AppController implements AppControllerForUI {
                 return;
             }
         } catch (e) {}
-        const messages = this.appSTM.getApp().vgaAnswers;
-        this.appSTM.vgaAnswers(messages + msgData);
+        const colonPos = msgData.indexOf(':');
+        if (colonPos < 0) {
+            console.error('Divider ":" is not found');
+            return;
+        }
+        const prefix = msgData.substring(0, colonPos);
+        if (prefix === this.vgaDeviceId) {
+            const messages = this.appSTM.getApp().vgaAnswers;
+            this.appSTM.vgaAnswers(messages + msgData.substring(colonPos + 1));
+        }
+        if (prefix === this.kbDeviceId) {
+            const keyboardInput = msgData.substring(colonPos + 1).trim();
+            switch (keyboardInput) {
+                case '[ESC]':
+                case '[PAGEUP]':
+                case '[PAGEDOWN]':
+                case '[UPARROW]':
+                case '[LEFTARROW]':
+                case '[DOWNARROW]':
+                case '[RIGHTARROW]':
+                    break;
+
+                case '[ENTER]':
+                    this.wsSendToVGA('\\n');
+                    break;
+
+                case '[BACKSPACE]':
+                    this.wsSendToVGA('\\bs');
+                    break;
+
+                case '[TAB]':
+                    this.wsSendToVGA('   ');
+                    break;
+
+                case '[SPACE]':
+                    this.wsSendToVGA(' ');
+                    break;
+
+                default:
+                    this.wsSendToVGA(keyboardInput);
+            }
+        }
     };
 
     createWs() {

@@ -95,7 +95,7 @@ export class ServerController implements MainControllerForWs {
         }
 
         if (portData.state === MyState.WORKING) {
-            this.ws.send(text);
+            this.ws.send(portData.usbDeviceID + ':' + text);
         }
     };
 

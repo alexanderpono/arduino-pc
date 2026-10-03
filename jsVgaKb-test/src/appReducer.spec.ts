@@ -16,6 +16,7 @@ describe('appReducer', () => {
         ${[app.devices(rndDevices)]} | ${'sets .devices for AppEvent.DEVICES action'}         | ${AppEvent.DEVICES}      | ${'devices'}    | ${rndDevices}
         ${[app.vgaAnswers(rndStr)]}  | ${'sets .vgaAnswers for AppEvent.VGA_ANSWERS action'}  | ${AppEvent.VGA_ANSWERS}  | ${'vgaAnswers'} | ${rndStr}
         ${[app.isVgaReady(rndBool)]} | ${'sets .isVgaReady for AppEvent.IS_VGA_READY action'} | ${AppEvent.IS_VGA_READY} | ${'isVgaReady'} | ${rndBool}
+        ${[app.isKbReady(rndBool)]}  | ${'sets .isKbReady for AppEvent.IS_KB_READY action'}   | ${AppEvent.IS_KB_READY}  | ${'isKbReady'}  | ${rndBool}
     `('$testName', async ({ actions, event, stateSelector, value }) => {
         let state: AppState = { ...defaultAppState };
         actions.forEach((action: Action<AppState>) => {
