@@ -37,7 +37,6 @@ export class ServerController implements MainControllerForWs {
     private rest: RestServer;
     private ws: Ws;
     private wsServer;
-    private state: MyState;
     private isWsConnected: boolean;
     private devices: SerialDeviceStatus[];
 
@@ -53,7 +52,6 @@ export class ServerController implements MainControllerForWs {
         this.wsServer = new WebSocket.Server({ port });
         this.wsServer.on('connection', this.ws.onConnect);
         this.rest.run();
-        this.state = MyState.CREATED;
         this.isWsConnected = false;
         this.findDevices();
     }
@@ -65,6 +63,8 @@ export class ServerController implements MainControllerForWs {
 
         const portData = this.devices.find((device) => device.path === path);
         if (typeof portData === 'undefined') {
+            console.log(`portData (${path}) is not found`);
+            console.log('this.devices=', this.devices);
             return;
         }
 
@@ -94,7 +94,7 @@ export class ServerController implements MainControllerForWs {
             return;
         }
 
-        if (this.state === MyState.WORKING) {
+        if (portData.state === MyState.WORKING) {
             this.ws.send(text);
         }
     };
@@ -137,6 +137,8 @@ export class ServerController implements MainControllerForWs {
                         (device) => '' + device.usbDeviceID === '' + jsonMessage.deviceId
                     );
                     if (typeof portData === 'undefined') {
+                        console.log('portData is not found');
+                        console.log('this.devices=', this.devices);
                         return;
                     }
                     this.messageToSerial(portData.path, jsonMessage.data);

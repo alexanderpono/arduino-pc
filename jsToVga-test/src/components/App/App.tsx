@@ -40,7 +40,7 @@ export const App: React.FC<AppProps> = ({ ctrl }) => {
     };
 
     const wsSendCommand = () => {
-        ctrl.wsSend(command);
+        ctrl.wsSendToVGA(command);
     };
 
     return (
