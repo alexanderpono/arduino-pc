@@ -1,5 +1,0 @@
-POST http://localhost:3100/api/reset
-Content-Type: application/json
-
-{
-}
