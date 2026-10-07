@@ -1,22 +1,19 @@
 {
   "compilerOptions": {
-    "baseUrl": "./",
+    "rootDir": ".",
     "paths": {
-      "@ui-src/*": ["ui-src/*"],
-      "@back-src/*": ["back-src/*"],
-      "@src/*": ["src/*"],
-      "@config/*": ["../mp3-player-config/*"]
+      "@src/*": ["./src/*"]
     },
     "target": "es6",
-    "module": "commonjs",
+    "module": "nodenext",
     "allowJs": true,
     "jsx": "react",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "outDir": "./temp/tsc-build"
   },  
-  "include": ["ui-src", "src", "back-src", "custom.d.ts"]
+  "include": ["src", "custom.d.ts"]
 }

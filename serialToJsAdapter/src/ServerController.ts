@@ -2,35 +2,18 @@ import { RestServer } from './ports/RestServer';
 import { Serial } from './ports/Serial';
 import { Ws } from './ports/Ws';
 import { WebSocket } from 'ws';
-import { JsonMessageFromUI, MainControllerForWs } from './ServerController.types';
+import {
+    PortState,
+    JsonMessageFromUI,
+    MainControllerForWs,
+    SerialCommand,
+    SerialPortInfo,
+    DeviceInfo,
+    defaultDeviceInfo
+} from './ServerController.types';
 import { createWsDeviceFound } from './ports/Ws.types';
 import { PortInfo } from '@serialport/bindings-cpp';
 import { SerialPort } from 'serialport';
-
-enum MyState {
-    CREATED = 'CREATED',
-    PORT_IS_OPENED = 'PORT_IS_OPENED',
-    WAITING_FOR_DEVICE_TYPE = 'WAITING_FOR_DEVICE_TYPE',
-    WAITING_FOR_DEVICE_ID = 'WAITING_FOR_DEVICE_ID',
-    WAITING_FOR_DEVICE_VER = 'WAITING_FOR_DEVICE_VER',
-    WAITING_FOR_DEVICE_CAPS = 'WAITING_FOR_DEVICE_CAPS',
-    WORKING = 'WORKING'
-}
-enum SerialCommand {
-    GET_DEVICE_TYPE = '\\dt',
-    GET_DEVICE_ID = '\\di',
-    GET_DEVICE_CAPS = '\\dc'
-}
-interface SerialDeviceStatus {
-    state: MyState;
-    path: string;
-    portHandler: SerialPort;
-    messageBuffer: string;
-    usbDeviceType: string;
-    usbDeviceID: string;
-    usbDeviceCaps: string;
-    isUsbDeviceReady: boolean;
-}
 
 export class ServerController implements MainControllerForWs {
     private serial: Serial;
@@ -38,9 +21,11 @@ export class ServerController implements MainControllerForWs {
     private ws: Ws;
     private wsServer;
     private isWsConnected: boolean;
-    private devices: SerialDeviceStatus[];
+    private ports: SerialPortInfo[];
+    private devices: DeviceInfo[];
 
     constructor(private restPort: number) {
+        this.ports = [];
         this.devices = [];
         this.serial = new Serial();
         this.ws = new Ws(this);
@@ -56,105 +41,199 @@ export class ServerController implements MainControllerForWs {
         this.findDevices();
     }
 
-    listenersToSetRGB = [];
-    listenersToGetRGB = [];
+    getIndexAtDevices = (portData: SerialPortInfo) => {
+        return this.devices
+            .map((device, index) => {
+                if (device.port === portData.path) {
+                    return index;
+                }
+                return -1;
+            })
+            .filter((index) => index >= 0);
+    };
+
     onMessageFromSerial = (path: string, text: string) => {
         console.log(`onMessageFromSerial ${path}:`, text.trim());
 
-        const portData = this.devices.find((device) => device.path === path);
+        const portData = this.ports.find((device) => device.path === path);
         if (typeof portData === 'undefined') {
             console.log(`portData (${path}) is not found`);
-            console.log('this.devices=', this.devices);
+            console.log('this.ports=', this.ports);
             return;
         }
 
-        if (portData.state === MyState.WAITING_FOR_DEVICE_TYPE) {
-            portData.usbDeviceType = text.trim();
+        const COMPOSITE = 'COMPOSITE:';
+        if (portData.state === PortState.WAITING_FOR_DEVICE_TYPE) {
+            const gotDeviceType = text.trim();
+            if (gotDeviceType.startsWith(COMPOSITE)) {
+                const newDevices = gotDeviceType
+                    .substring(COMPOSITE.length)
+                    .split(',')
+                    .map((deviceType) => {
+                        const newDevice: DeviceInfo = {
+                            ...defaultDeviceInfo,
+                            port: portData.path,
+                            type: deviceType,
+                            isComposite: true
+                        };
+                        return newDevice;
+                    });
+                this.devices = [...this.devices, ...newDevices];
+            } else {
+                const newDevice: DeviceInfo = {
+                    ...defaultDeviceInfo,
+                    port: portData.path,
+                    type: gotDeviceType
+                };
+                this.devices.push(newDevice);
+            }
             this.messageToSerial(path, SerialCommand.GET_DEVICE_ID);
-            portData.state = MyState.WAITING_FOR_DEVICE_ID;
+            portData.state = PortState.WAITING_FOR_DEVICE_ID;
             return;
         }
 
-        if (portData.state === MyState.WAITING_FOR_DEVICE_ID) {
-            portData.usbDeviceID = text.trim();
-            this.messageToSerial(path, SerialCommand.GET_DEVICE_CAPS);
-            portData.state = MyState.WAITING_FOR_DEVICE_CAPS;
-            return;
-        }
+        if (portData.state === PortState.WAITING_FOR_DEVICE_ID) {
+            const gotDeviceId = text.trim();
 
-        if (portData.state === MyState.WAITING_FOR_DEVICE_CAPS) {
-            portData.usbDeviceCaps = text.trim();
-            portData.state = MyState.WORKING;
-            portData.isUsbDeviceReady = true;
-
-            if (this.isWsConnected) {
-                this.sendWsDeviceFound(path);
+            if (gotDeviceId.startsWith(COMPOSITE)) {
+                const deviceIds = gotDeviceId.substring(COMPOSITE.length).split(',');
+                const indexAtDevices = this.getIndexAtDevices(portData);
+                if (indexAtDevices.length !== deviceIds.length) {
+                    console.error('Devices is not found for port=', portData.path);
+                    return;
+                }
+                indexAtDevices.forEach((indexAtDevices, idx) => {
+                    this.devices[indexAtDevices].id = deviceIds[idx];
+                });
+            } else {
+                const deviceIndex = this.devices.findIndex(
+                    (device) => device.port === portData.path
+                );
+                if (deviceIndex < 0) {
+                    console.error('Device is not found for port=', portData.path);
+                    return;
+                }
+                this.devices[deviceIndex].id = gotDeviceId;
             }
 
+            this.messageToSerial(path, SerialCommand.GET_DEVICE_CAPS);
+            portData.state = PortState.WAITING_FOR_DEVICE_CAPS;
             return;
         }
 
-        if (portData.state === MyState.WORKING) {
-            this.ws.send(portData.usbDeviceID + ':' + text);
+        if (portData.state === PortState.WAITING_FOR_DEVICE_CAPS) {
+            const gotDeviceCaps = text.trim();
+
+            if (gotDeviceCaps.startsWith(COMPOSITE)) {
+                const deviceCapses = gotDeviceCaps.substring(COMPOSITE.length).split(',');
+                const indexAtDevices = this.getIndexAtDevices(portData);
+                if (indexAtDevices.length !== deviceCapses.length) {
+                    console.error('Devices is not found for port=', portData.path);
+                    return;
+                }
+                indexAtDevices.forEach((indexAtDevices, idx) => {
+                    this.devices[indexAtDevices].caps = deviceCapses[idx];
+                    this.devices[indexAtDevices].isReady = true;
+
+                    if (this.isWsConnected) {
+                        this.sendWsDeviceFound(this.devices[indexAtDevices]);
+                    }
+                });
+            } else {
+                const deviceIndex = this.devices.findIndex(
+                    (device) => device.port === portData.path
+                );
+                if (deviceIndex < 0) {
+                    console.error('Device is not found for port=', portData.path);
+                    return;
+                }
+                this.devices[deviceIndex].caps = gotDeviceCaps;
+                this.devices[deviceIndex].isReady = true;
+
+                if (this.isWsConnected) {
+                    this.sendWsDeviceFound(this.devices[deviceIndex]);
+                }
+            }
+            console.log('this.devices=', this.devices);
+
+            portData.state = PortState.WORKING;
+
+            return;
+        }
+
+        if (portData.state === PortState.WORKING) {
+            const devicesForThisPort = this.devices.filter(
+                (device) => device.port === portData.path
+            );
+            if (devicesForThisPort.length === 1) {
+                this.ws.send(devicesForThisPort[0].id + ':' + text);
+            }
+            if (devicesForThisPort.length > 1) {
+                const colonPos = text.indexOf(':');
+                const index = parseInt(text.substring(0, colonPos));
+                const textTail = text.substring(colonPos + 1);
+                const ERROR_MESSAGE = 'cannot find device for message:';
+                if (!isNaN(index)) {
+                    const deviceInfo = devicesForThisPort[index];
+                    if (typeof deviceInfo != undefined) {
+                        this.ws.send(deviceInfo.id + ':' + textTail);
+                    } else {
+                        console.error(ERROR_MESSAGE, text);
+                    }
+                } else {
+                    console.error(ERROR_MESSAGE, text);
+                }
+            }
         }
     };
 
-    sendWsDeviceFound = (path: string) => {
-        const portData = this.devices.find((device) => device.path === path);
-        if (typeof portData === 'undefined') {
-            return;
-        }
-
+    sendWsDeviceFound = (deviceData: DeviceInfo) => {
         this.ws.send(
             JSON.stringify(
-                createWsDeviceFound(
-                    portData.usbDeviceID,
-                    portData.usbDeviceType,
-                    portData.usbDeviceID,
-                    portData.usbDeviceCaps
-                )
+                createWsDeviceFound(deviceData.id, deviceData.type, deviceData.id, deviceData.caps)
             )
         );
     };
     onWsConnect = () => {
         this.isWsConnected = true;
-        this.devices.forEach((portData) => {
-            if (portData.isUsbDeviceReady) {
-                this.sendWsDeviceFound(portData.path);
+        this.devices.forEach((deviceData) => {
+            if (deviceData.isReady) {
+                this.sendWsDeviceFound(deviceData);
             }
         });
     };
 
     onWsMesage = (message: string) => {
-        console.log('on(message) message=', message);
         try {
             const jsonMessage: JsonMessageFromUI = JSON.parse(message);
             console.log('on(message) jsonMessage=', jsonMessage);
             switch (jsonMessage.action) {
                 case 'TO_SERIAL':
-                    console.log('jsonMessage=', jsonMessage);
-                    const portData = this.devices.find(
-                        (device) => '' + device.usbDeviceID === '' + jsonMessage.deviceId
+                    const deviceData = this.devices.find(
+                        (device) => device.id === jsonMessage.deviceId
                     );
-                    if (typeof portData === 'undefined') {
-                        console.log('portData is not found');
+                    if (typeof deviceData === 'undefined') {
+                        console.log(
+                            'onWsMesage() deviceData is not found for message',
+                            jsonMessage
+                        );
                         console.log('this.devices=', this.devices);
                         return;
                     }
-                    this.messageToSerial(portData.path, jsonMessage.data);
+                    this.messageToSerial(deviceData.port, jsonMessage.data);
                     break;
                 default:
                     console.log('Ws: Unknown command');
                     break;
             }
         } catch (error) {
-            console.log('Ws: error', error);
+            console.log('Ws: error', error, 'for message', message);
         }
     };
 
     messageToSerial = (path: string, msg: string) => {
         console.log(`messageToSerial ${path} msg=`, msg);
-        const portData = this.devices.find((device) => device.path === path);
+        const portData = this.ports.find((device) => device.path === path);
         if (typeof portData !== 'undefined') {
             portData.portHandler.write(msg, function (err) {
                 if (err) {
@@ -166,12 +245,12 @@ export class ServerController implements MainControllerForWs {
 
     onSerialPortOpened = (path: string) => {
         console.log(`Port ${path} is opened`);
-        const portData = this.devices.find((device) => device.path === path);
+        const portData = this.ports.find((device) => device.path === path);
         if (typeof portData !== 'undefined') {
-            portData.state = MyState.PORT_IS_OPENED;
+            portData.state = PortState.PORT_IS_OPENED;
 
             setTimeout(() => {
-                portData.state = MyState.WAITING_FOR_DEVICE_TYPE;
+                portData.state = PortState.WAITING_FOR_DEVICE_TYPE;
                 this.messageToSerial(path, SerialCommand.GET_DEVICE_TYPE);
             }, 2000);
         }
@@ -181,20 +260,17 @@ export class ServerController implements MainControllerForWs {
         const availableSerialPorts = await this.serial.getAvailablePorts();
         console.log('findDevices() availableSerialPorts=', availableSerialPorts);
 
-        this.devices = availableSerialPorts.map((portInfo: PortInfo): SerialDeviceStatus => {
+        this.ports = availableSerialPorts.map((portInfo: PortInfo): SerialPortInfo => {
             const path = portInfo.path;
-            const deviceInfo: SerialDeviceStatus = {
-                state: MyState.CREATED,
+            const deviceInfo: SerialPortInfo = {
+                state: PortState.CREATED,
                 path: path,
                 portHandler: new SerialPort({
                     path: path,
                     baudRate: 9600
                 }),
                 messageBuffer: ``,
-                usbDeviceType: ``,
-                usbDeviceID: ``,
-                usbDeviceCaps: ``,
-                isUsbDeviceReady: false
+                isComposite: false
             };
 
             deviceInfo.portHandler.on('error', function (err) {
