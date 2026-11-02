@@ -20,13 +20,15 @@
 #define BLACK COLOR_BLACK
 
 void vgaPrintAscii(byte number, byte x, byte y, byte color);
+extern VGAX vga;
+
 
 class TextScreen
 {
 public:
-    static void renderCursor();
+    static void renderTextCursor();
     static void printChar(byte textX, byte textY, byte ch);
-    static void clearCursor();
+    static void clearTextCursor();
     static void clearChar(byte textX, byte textY, byte ch);
     static void dump();
     static byte getCharAt(byte x, byte y);
@@ -38,7 +40,7 @@ public:
     static void cls();
     static void clearAt(byte textX, byte textY);
     static void printAt(byte x, byte y, String s);
-    static void renderCursorUsingTick();
+    static void renderTextCursorUsingTick();
     static void setColor(byte color);
     static void setBgColor(byte color);
     static void scrollUp();
@@ -47,6 +49,44 @@ public:
     static byte textXToScreenX(byte textX);
     static byte textYToScreenY(byte textY);
     static void screenTargetXY(byte x, byte y);
+    static void drawTextCursor();
+    static void windowWH(byte w, byte h);
+    static void disableTextCursor();
+    static void enableTextCursor();
+    static void disableInversedCursor();
+    static void enableInversedCursor();
+    static void disableLargeCursor();
+    static void enableLargeCursor();
+
+    static inline byte inverse(byte val) 
+    {
+        switch (val)
+        {
+            case 0:
+                return 3;
+            case 1:
+                return 2;
+            case 2:
+                return 1;
+            case 3:
+                return 0;
+    
+            default:
+                return 0;
+        }
+    }
+
+    static inline void inverse4(byte x, byte y)
+    {
+        vga.putpixel(x,y,inverse(vga.getpixel(x,y)));
+        x++;
+        vga.putpixel(x,y,inverse(vga.getpixel(x,y)));
+        x++;
+        vga.putpixel(x,y,inverse(vga.getpixel(x,y)));
+        x++;
+        vga.putpixel(x,y,inverse(vga.getpixel(x,y)));
+        return;
+    }
 
     static byte windowW;
     static byte windowH;
@@ -54,9 +94,9 @@ public:
     static byte cursorY;
     static byte screenTargetX;
     static byte screenTargetY;
-    static boolean isInitialDraw;
     static byte colorMain;
     static byte bgColor;
+    static byte flags;
 
 private:
     static void clearBuffer();

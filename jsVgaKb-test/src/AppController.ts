@@ -128,6 +128,10 @@ export class AppController implements AppControllerForUI {
                     this.wsSendToVGA(' ');
                     break;
 
+                case '\\':
+                    this.wsSendToVGA('\\\\');
+                    break;
+
                 default:
                     this.wsSendToVGA(keyboardInput);
             }

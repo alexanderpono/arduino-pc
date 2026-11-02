@@ -25,6 +25,12 @@ Baud rate 9600
 \di - get device ID
 \dv - get device version
 \dc - get device capabilities
+\tc,o,0 - text cursor is enabed
+\tc,o,1 - text cursor is disabled
+\tc,i,0 - text cursor is inversed
+\tc,i,1 - text cursor uses color/background color
+\tc,l,0 - text cursor is small
+\tc,l,1 - text cursor is large (only for inversed cursor)
 
 
 ```

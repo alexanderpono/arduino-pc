@@ -22,6 +22,15 @@ int tickReading;
 #define BACK_SLASH_WIN_POSX 6
 #define BACK_SLASH_WIN_POSY 7
 #define BACK_SLASH_DEVICE 8
+#define BACK_SLASH_TEXT 9
+#define BACK_SLASH_CURSOR 10
+#define BACK_SLASH_CURSOR_COMMA 11
+#define BACK_SLASH_CURSOR_COMMA_ON 12
+#define BACK_SLASH_CURSOR_COMMA_ON_COMMA 13
+#define BACK_SLASH_CURSOR_COMMA_INVERSED 14
+#define BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA 15
+#define BACK_SLASH_CURSOR_COMMA_LARGE 16
+#define BACK_SLASH_CURSOR_COMMA_LARGE_COMMA 17
 
 #define NUMBER_9 2
 #define NUMBER_2 3
@@ -190,7 +199,7 @@ void SerialAPIController::processSerialInputsUsingTick()
         tickReading = 0;
 
         myNumber = Serial.read();
-        screen.clearCursor();
+        screen.clearTextCursor();
 
         if (state == WORKING) {
             switch (myNumber)
@@ -241,6 +250,10 @@ void SerialAPIController::processSerialInputsUsingTick()
 
             case 'd':
                 state = BACK_SLASH_DEVICE;
+                break;
+
+            case 't':
+                state = BACK_SLASH_TEXT;
                 break;
 
             case 'h':
@@ -408,7 +421,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 break;
 
             case 'i':
-                Serial.println(F("001"));
+                Serial.println(F("003"));
                 state = WORKING;
                 break;
 
@@ -436,6 +449,158 @@ void SerialAPIController::processSerialInputsUsingTick()
 
             default:
                 Serial.print(F("unsupported command: '\\d"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_TEXT) {
+            switch (myNumber)
+            {
+            case 'c':
+                state = BACK_SLASH_CURSOR;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR) {
+            switch (myNumber)
+            {
+            case ',':
+                state = BACK_SLASH_CURSOR_COMMA;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA) {
+            switch (myNumber)
+            {
+            case 'o':
+                state = BACK_SLASH_CURSOR_COMMA_ON;
+                break;
+
+            case 'i':
+                state = BACK_SLASH_CURSOR_COMMA_INVERSED;
+                break;
+
+            case 'l':
+                state = BACK_SLASH_CURSOR_COMMA_LARGE;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_ON) {
+            switch (myNumber)
+            {
+            case ',':
+                state = BACK_SLASH_CURSOR_COMMA_ON_COMMA;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_INVERSED) {
+            switch (myNumber)
+            {
+            case ',':
+                state = BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_LARGE) {
+            switch (myNumber)
+            {
+            case ',':
+                state = BACK_SLASH_CURSOR_COMMA_LARGE_COMMA;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_ON_COMMA) {
+            switch (myNumber)
+            {
+            case '0':
+                screen.disableTextCursor();
+                state = WORKING;
+                break;
+
+            case '1':
+                screen.enableTextCursor();
+                state = WORKING;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA) {
+            switch (myNumber)
+            {
+            case '0':
+                screen.disableInversedCursor();
+                state = WORKING;
+                break;
+
+            case '1':
+                screen.enableInversedCursor();
+                state = WORKING;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_COMMA_LARGE_COMMA) {
+            switch (myNumber)
+            {
+            case '0':
+                screen.disableLargeCursor();
+                state = WORKING;
+                break;
+
+            case '1':
+                screen.enableLargeCursor();
+                state = WORKING;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;

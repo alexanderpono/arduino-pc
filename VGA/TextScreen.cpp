@@ -6,25 +6,84 @@ unsigned char screenBuf[TXT_SCREEN_H][TXT_SCREEN_W];
 unsigned char atScreen[TXT_SCREEN_H][TXT_SCREEN_W];
 unsigned int counter = 0; 
 
+#define IS_INITIAL_DRAW 1
+#define NOT_IS_INITIAL_DRAW 254
+#define IS_TEXT_CURSOR_VISIBLE 2
+#define NOT_IS_TEXT_CURSOR_VISIBLE 253
+#define IS_TEXT_CURSOR_ON 4
+#define NOT_IS_TEXT_CURSOR_ON 251
+#define IS_TEXT_CURSOR_LARGE 8
+#define NOT_IS_TEXT_CURSOR_LARGE 247
+#define IS_TEXT_CURSOR_INVERSED 16
+#define NOT_IS_TEXT_CURSOR_INVERSED 239
+
+
 byte TextScreen::cursorX = 0;
 byte TextScreen::cursorY = 0;
-byte TextScreen::screenTargetX = 1;
-byte TextScreen::screenTargetY = 1;
-byte TextScreen::windowW = 13;
-byte TextScreen::windowH = 5;
-boolean TextScreen::isInitialDraw = true;
+byte TextScreen::screenTargetX = 0;
+byte TextScreen::screenTargetY = 0;
+byte TextScreen::windowW = TXT_SCREEN_W;
+byte TextScreen::windowH = TXT_SCREEN_H;
 byte TextScreen::colorMain = COLOR_1;
 byte TextScreen::bgColor = COLOR_BLACK;
 byte textTmp;
+byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED;
 
-void TextScreen::clearCursor()
+void TextScreen::clearTextCursor()
 {
-    clearChar(cursorX, cursorY, byte(95));
+    if ((flags & IS_TEXT_CURSOR_ON) == 0)
+    {
+        return;
+    }
+
+    if ((flags & IS_TEXT_CURSOR_VISIBLE) == IS_TEXT_CURSOR_VISIBLE) {
+        if ((flags & IS_TEXT_CURSOR_INVERSED) == IS_TEXT_CURSOR_INVERSED) {
+            drawTextCursor();
+        } else {
+            clearChar(cursorX, cursorY, byte(95));
+        }
+        flags = flags & NOT_IS_TEXT_CURSOR_VISIBLE;
+    }
 }
 
-void TextScreen::renderCursor()
+void TextScreen::renderTextCursor()
 {
-    printChar(cursorX, cursorY, byte(95));
+    if ((flags & IS_TEXT_CURSOR_ON) == 0)
+    {
+        return;
+    }
+
+    if ((flags & IS_TEXT_CURSOR_INVERSED) == IS_TEXT_CURSOR_INVERSED) {
+        drawTextCursor();
+
+        if ((flags & IS_TEXT_CURSOR_VISIBLE) == IS_TEXT_CURSOR_VISIBLE) {
+            flags = flags & NOT_IS_TEXT_CURSOR_VISIBLE;
+        } else {
+            flags = flags | IS_TEXT_CURSOR_VISIBLE;
+        }
+    } else {
+        printChar(cursorX, cursorY, byte(95));
+        flags = flags | IS_TEXT_CURSOR_VISIBLE;
+    }
+}
+
+void TextScreen::drawTextCursor()
+{
+    byte screenX = textXToScreenX(cursorX);
+    byte screenY = textYToScreenY(cursorY);
+    if ((flags & IS_TEXT_CURSOR_LARGE) == IS_TEXT_CURSOR_LARGE)
+    {
+        inverse4(screenX, screenY++);
+        inverse4(screenX, screenY++);
+        inverse4(screenX, screenY++);
+        inverse4(screenX, screenY++);
+        inverse4(screenX, screenY++);
+        inverse4(screenX, screenY);
+    } 
+    else
+    {
+        inverse4(screenX, screenY + 5);
+    }
 }
 
 byte TextScreen::textXToScreenX(byte textX)
@@ -63,7 +122,7 @@ void TextScreen::dump()
         {
             newVal = screenBuf[textY][textX];
 
-            if (!TextScreen::isInitialDraw)
+            if ((TextScreen::flags & IS_INITIAL_DRAW) == 0)
             {
                 oldVal = atScreen[textY][textX];
                 if (newVal != oldVal)
@@ -81,7 +140,7 @@ void TextScreen::dump()
         }
     }
 
-    isInitialDraw = false;
+    flags = flags & NOT_IS_INITIAL_DRAW;
 }
 
 void TextScreen::setCharAt(byte x, byte y, byte ch)
@@ -91,7 +150,7 @@ void TextScreen::setCharAt(byte x, byte y, byte ch)
 
 void TextScreen::print(String s)
 {
-    clearCursor();
+    clearTextCursor();
     for (byte i = 0; i < s.length(); i++)
     {
         if (cursorX < windowW)
@@ -197,17 +256,17 @@ void TextScreen::printAt(byte x, byte y, String s)
 #define SHOW_CURSOR_COUNT 30000
 #define HIDE_CURSOR_COUNT 60000
 
-void TextScreen::renderCursorUsingTick()
+void TextScreen::renderTextCursorUsingTick()
 {
     counter++;
     if (counter == SHOW_CURSOR_COUNT)
     {
-        renderCursor();
+        renderTextCursor();
     }
     if (counter == HIDE_CURSOR_COUNT)
     {
         counter = 0;
-        clearCursor();
+        clearTextCursor();
     }
 }
 
@@ -260,7 +319,7 @@ void TextScreen::backspace() {
     if (cursorX > 0) {
         cursorX--;
         textTmp = getCharAt(cursorX, cursorY);
-        clearChar(cursorX, cursorY, textTmp);   
+        clearChar(cursorX, cursorY, textTmp);
         moveCursorTo(cursorX, cursorY);
     }
 }
@@ -271,4 +330,40 @@ void TextScreen::screenTargetXY(byte x, byte y)
         screenTargetX = x;
         screenTargetY = y;
     }
+}
+
+void TextScreen::windowWH(byte w, byte h)
+{
+    windowW = w;
+    windowH = h;
+}
+
+void TextScreen::disableTextCursor()
+{
+    flags = flags & NOT_IS_TEXT_CURSOR_ON;
+}
+
+void TextScreen::enableTextCursor()
+{
+    flags = flags | IS_TEXT_CURSOR_ON;
+}
+
+void TextScreen::disableInversedCursor()
+{
+    flags = flags & NOT_IS_TEXT_CURSOR_INVERSED;
+}
+
+void TextScreen::enableInversedCursor()
+{
+    flags = flags | IS_TEXT_CURSOR_INVERSED;
+}
+
+void TextScreen::disableLargeCursor()
+{
+    flags = flags & NOT_IS_TEXT_CURSOR_LARGE;
+}
+
+void TextScreen::enableLargeCursor()
+{
+    flags = flags | IS_TEXT_CURSOR_LARGE;
 }
