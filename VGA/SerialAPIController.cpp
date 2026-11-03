@@ -24,13 +24,16 @@ int tickReading;
 #define BACK_SLASH_DEVICE 8
 #define BACK_SLASH_TEXT 9
 #define BACK_SLASH_CURSOR 10
-#define BACK_SLASH_CURSOR_COMMA 11
-#define BACK_SLASH_CURSOR_COMMA_ON 12
-#define BACK_SLASH_CURSOR_COMMA_ON_COMMA 13
-#define BACK_SLASH_CURSOR_COMMA_INVERSED 14
-#define BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA 15
-#define BACK_SLASH_CURSOR_COMMA_LARGE 16
-#define BACK_SLASH_CURSOR_COMMA_LARGE_COMMA 17
+#define BACK_SLASH_CURSOR_ON 11
+#define BACK_SLASH_CURSOR_INVERSED 12
+#define BACK_SLASH_CURSOR_LARGE 13
+#define BACK_SLASH_CURSOR_POSX 14
+#define BACK_SLASH_CURSOR_POSY 15
+#define BACK_SLASH_GR 16
+#define BACK_SLASH_GR_CURSOR 17
+#define BACK_SLASH_GR_CURSOR_ON 18
+#define BACK_SLASH_GR_CURSOR_POSX 19
+#define BACK_SLASH_GR_CURSOR_POSY 20
 
 #define NUMBER_9 2
 #define NUMBER_2 3
@@ -256,6 +259,10 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = BACK_SLASH_TEXT;
                 break;
 
+            case 'g':
+                state = BACK_SLASH_GR;
+                break;
+
             case 'h':
                 Serial.println(F("\\h - this help"));
                 Serial.println(F("\\r - send return caret"));
@@ -270,6 +277,18 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.println(F("\\di - get device ID"));
                 Serial.println(F("\\dv - get device version"));
                 Serial.println(F("\\dc - get device capabilities"));
+
+                Serial.println(F("\\tco0 - set text cursor is disabed"));
+                Serial.println(F("\\tco1 - set text cursor is enabed"));
+                Serial.println(F("\\tci0 - set text cursor is inversed"));
+                Serial.println(F("\\tci1 - set text cursor uses color/background color"));
+                Serial.println(F("\\tcl0 - set text cursor is small"));
+                Serial.println(F("\\tcl1 - set text cursor is large (only for inversed cursor)"));
+                Serial.println(F("\\tcp255,255; - set text cussor position at chars (x 0..24 y 0..10)"));
+                Serial.println(F("\\gco0 - turn graphics cursor off"));
+                Serial.println(F("\\gco1 - turn graphics cursor on"));
+                Serial.println(F("\\gcp255,255; - set graphics cursor position (x 0..159, y 0..40)"));
+                
                 state = WORKING;
                 break;
 
@@ -471,30 +490,21 @@ void SerialAPIController::processSerialInputsUsingTick()
         } else if (state == BACK_SLASH_CURSOR) {
             switch (myNumber)
             {
-            case ',':
-                state = BACK_SLASH_CURSOR_COMMA;
-                break;
-
-            default:
-                Serial.print(F("syntax error: '\\wp"));
-                Serial.print(String((char)myNumber));
-                Serial.println("'");
-                state = WORKING;
-                break;
-            }
-        } else if (state == BACK_SLASH_CURSOR_COMMA) {
-            switch (myNumber)
-            {
             case 'o':
-                state = BACK_SLASH_CURSOR_COMMA_ON;
+                state = BACK_SLASH_CURSOR_ON;
                 break;
 
             case 'i':
-                state = BACK_SLASH_CURSOR_COMMA_INVERSED;
+                state = BACK_SLASH_CURSOR_INVERSED;
                 break;
 
             case 'l':
-                state = BACK_SLASH_CURSOR_COMMA_LARGE;
+                state = BACK_SLASH_CURSOR_LARGE;
+                break;
+
+            case 'p':
+                state = BACK_SLASH_CURSOR_POSX;
+                prepareParseNumber(',');
                 break;
 
             default:
@@ -504,49 +514,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
             }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_ON) {
-            switch (myNumber)
-            {
-            case ',':
-                state = BACK_SLASH_CURSOR_COMMA_ON_COMMA;
-                break;
-
-            default:
-                Serial.print(F("syntax error: '\\wp"));
-                Serial.print(String((char)myNumber));
-                Serial.println("'");
-                state = WORKING;
-                break;
-            }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_INVERSED) {
-            switch (myNumber)
-            {
-            case ',':
-                state = BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA;
-                break;
-
-            default:
-                Serial.print(F("syntax error: '\\wp"));
-                Serial.print(String((char)myNumber));
-                Serial.println("'");
-                state = WORKING;
-                break;
-            }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_LARGE) {
-            switch (myNumber)
-            {
-            case ',':
-                state = BACK_SLASH_CURSOR_COMMA_LARGE_COMMA;
-                break;
-
-            default:
-                Serial.print(F("syntax error: '\\wp"));
-                Serial.print(String((char)myNumber));
-                Serial.println("'");
-                state = WORKING;
-                break;
-            }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_ON_COMMA) {
+        } else if (state == BACK_SLASH_CURSOR_ON) {
             switch (myNumber)
             {
             case '0':
@@ -566,7 +534,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
             }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_INVERSED_COMMA) {
+        } else if (state == BACK_SLASH_CURSOR_INVERSED) {
             switch (myNumber)
             {
             case '0':
@@ -586,7 +554,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = WORKING;
                 break;
             }
-        } else if (state == BACK_SLASH_CURSOR_COMMA_LARGE_COMMA) {
+        } else if (state == BACK_SLASH_CURSOR_LARGE) {
             switch (myNumber)
             {
             case '0':
@@ -601,6 +569,117 @@ void SerialAPIController::processSerialInputsUsingTick()
 
             default:
                 Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_CURSOR_POSX) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_CURSOR_POSY;
+                param1 = numberParseResult;
+                prepareParseNumber(';');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_CURSOR_POSY) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = WORKING;
+                screen.moveCursorTo(param1, numberParseResult);
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\wp"));
+                Serial.print(String(param1));
+                Serial.print(",");
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR) {
+            switch (myNumber)
+            {
+            case 'c':
+                state = BACK_SLASH_GR_CURSOR;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\gc"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_GR_CURSOR) {
+            switch (myNumber)
+            {
+            case 'o':
+                state = BACK_SLASH_GR_CURSOR_ON;
+                break;
+
+            case 'p':
+                state = BACK_SLASH_GR_CURSOR_POSX;
+                prepareParseNumber(',');
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\gc"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_GR_CURSOR_POSX) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_CURSOR_POSY;
+                param1 = numberParseResult;
+                prepareParseNumber(';');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gcp"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_CURSOR_POSY) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = WORKING;
+                screen.moveGrCursorTo(param1, numberParseResult);
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gcp"));
+                Serial.print(String(param1));
+                Serial.print(",");
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_CURSOR_ON) {
+            switch (myNumber)
+            {
+            case '0':
+                screen.disableGrCursor();
+                state = WORKING;
+                break;
+
+            case '1':
+                screen.enableGrCursor();
+                state = WORKING;
+                break;
+
+            default:
+                Serial.print(F("syntax error: '\\gc"));
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;

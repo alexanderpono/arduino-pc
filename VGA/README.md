@@ -25,14 +25,16 @@ Baud rate 9600
 \di - get device ID
 \dv - get device version
 \dc - get device capabilities
-\tc,o,0 - text cursor is enabed
-\tc,o,1 - text cursor is disabled
-\tc,i,0 - text cursor is inversed
-\tc,i,1 - text cursor uses color/background color
-\tc,l,0 - text cursor is small
-\tc,l,1 - text cursor is large (only for inversed cursor)
-
-
+\tco0 - set text cursor is disabed
+\tco1 - set text cursor is enabed
+\tci0 - set text cursor is inversed
+\tci1 - set text cursor uses color/background color
+\tcl0 - set text cursor is small
+\tcl1 - set text cursor is large (only for inversed cursor)
+\tcp255,255; - set text cussor position at chars (x 0..24 y 0..10)
+\gco0 - turn graphics cursor off
+\gco1 - turn graphics cursor on
+\gcp255,255; - set graphics cursor position (x 0..159, y 0..40)
 ```
 
 ## Example

@@ -176,6 +176,7 @@ void setup() {
   screen.println("1234");
   screen.dump();
 
+  screen.renderGrCursor();
 }
 void loop() {
   screen.renderTextCursorUsingTick();

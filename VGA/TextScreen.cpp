@@ -6,20 +6,10 @@ unsigned char screenBuf[TXT_SCREEN_H][TXT_SCREEN_W];
 unsigned char atScreen[TXT_SCREEN_H][TXT_SCREEN_W];
 unsigned int counter = 0; 
 
-#define IS_INITIAL_DRAW 1
-#define NOT_IS_INITIAL_DRAW 254
-#define IS_TEXT_CURSOR_VISIBLE 2
-#define NOT_IS_TEXT_CURSOR_VISIBLE 253
-#define IS_TEXT_CURSOR_ON 4
-#define NOT_IS_TEXT_CURSOR_ON 251
-#define IS_TEXT_CURSOR_LARGE 8
-#define NOT_IS_TEXT_CURSOR_LARGE 247
-#define IS_TEXT_CURSOR_INVERSED 16
-#define NOT_IS_TEXT_CURSOR_INVERSED 239
-
-
 byte TextScreen::cursorX = 0;
 byte TextScreen::cursorY = 0;
+byte TextScreen::grCursorX = 0;
+byte TextScreen::grCursorY = 0;
 byte TextScreen::screenTargetX = 0;
 byte TextScreen::screenTargetY = 0;
 byte TextScreen::windowW = TXT_SCREEN_W;
@@ -27,7 +17,7 @@ byte TextScreen::windowH = TXT_SCREEN_H;
 byte TextScreen::colorMain = COLOR_1;
 byte TextScreen::bgColor = COLOR_BLACK;
 byte textTmp;
-byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED;
+byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED | IS_GR_CURSOR_ON;
 
 void TextScreen::clearTextCursor()
 {
@@ -66,6 +56,42 @@ void TextScreen::renderTextCursor()
         flags = flags | IS_TEXT_CURSOR_VISIBLE;
     }
 }
+
+void TextScreen::renderGrCursor()
+{
+    if ((flags & IS_GR_CURSOR_ON) == 0)
+    {
+        return;
+    }
+
+    vga.putpixel(grCursorX,grCursorY,inverse(vga.getpixel(grCursorX,grCursorY)));
+    vga.putpixel(grCursorX,grCursorY+1,inverse(vga.getpixel(grCursorX,grCursorY+1)));
+    vga.putpixel(grCursorX,grCursorY+2,inverse(vga.getpixel(grCursorX,grCursorY+2)));
+    vga.putpixel(grCursorX+1,grCursorY,inverse(vga.getpixel(grCursorX+1,grCursorY)));
+    vga.putpixel(grCursorX+2,grCursorY,inverse(vga.getpixel(grCursorX+2,grCursorY)));
+    vga.putpixel(grCursorX+1,grCursorY+1,inverse(vga.getpixel(grCursorX+1,grCursorY+1)));
+    vga.putpixel(grCursorX+2,grCursorY+2,inverse(vga.getpixel(grCursorX+2,grCursorY+2)));
+
+    if ((flags & IS_GR_CURSOR_VISIBLE) == IS_GR_CURSOR_VISIBLE) {
+        flags = flags & NOT_IS_GR_CURSOR_VISIBLE;
+    } else {
+        flags = flags | IS_GR_CURSOR_VISIBLE;
+    }
+}
+
+void TextScreen::clearGrCursor()
+{
+    if ((flags & IS_GR_CURSOR_ON) == 0)
+    {
+        return;
+    }
+
+    if ((flags & IS_GR_CURSOR_VISIBLE) == IS_GR_CURSOR_VISIBLE) {
+        renderGrCursor();
+        flags = flags & NOT_IS_GR_CURSOR_VISIBLE;
+    }
+}
+
 
 void TextScreen::drawTextCursor()
 {
@@ -366,4 +392,27 @@ void TextScreen::disableLargeCursor()
 void TextScreen::enableLargeCursor()
 {
     flags = flags | IS_TEXT_CURSOR_LARGE;
+}
+
+void TextScreen::disableGrCursor()
+{
+    clearGrCursor();
+    flags = flags & NOT_IS_GR_CURSOR_ON;
+}
+
+void TextScreen::enableGrCursor()
+{
+    flags = flags | IS_GR_CURSOR_ON;
+    if ((flags & IS_GR_CURSOR_VISIBLE) == IS_GR_CURSOR_VISIBLE) {
+        renderGrCursor();    
+    }
+    renderGrCursor();    
+}
+
+void TextScreen::moveGrCursorTo(byte x, byte y)
+{
+    clearGrCursor();
+    grCursorX = x;
+    grCursorY = y;
+    renderGrCursor();
 }

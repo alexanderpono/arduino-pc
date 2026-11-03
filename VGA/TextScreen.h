@@ -22,6 +22,23 @@
 void vgaPrintAscii(byte number, byte x, byte y, byte color);
 extern VGAX vga;
 
+#define IS_INITIAL_DRAW 1
+#define NOT_IS_INITIAL_DRAW 254
+#define IS_TEXT_CURSOR_VISIBLE 2
+#define NOT_IS_TEXT_CURSOR_VISIBLE 253
+#define IS_TEXT_CURSOR_ON 4
+#define NOT_IS_TEXT_CURSOR_ON 251
+#define IS_TEXT_CURSOR_LARGE 8
+#define NOT_IS_TEXT_CURSOR_LARGE 247
+#define IS_TEXT_CURSOR_INVERSED 16
+#define NOT_IS_TEXT_CURSOR_INVERSED 239
+#define IS_GR_CURSOR_ON 32
+#define NOT_IS_GR_CURSOR_ON 223
+#define IS_GR_CURSOR_VISIBLE 64
+#define NOT_IS_GR_CURSOR_VISIBLE 191
+
+
+
 
 class TextScreen
 {
@@ -57,6 +74,13 @@ public:
     static void enableInversedCursor();
     static void disableLargeCursor();
     static void enableLargeCursor();
+    static void renderGrCursor();
+    static void clearGrCursor();
+    static void disableGrCursor();
+    static void enableGrCursor();
+    static void moveGrCursorTo(byte x, byte y);
+    
+    
 
     static inline byte inverse(byte val) 
     {
@@ -97,6 +121,8 @@ public:
     static byte colorMain;
     static byte bgColor;
     static byte flags;
+    static byte grCursorX;
+    static byte grCursorY;
 
 private:
     static void clearBuffer();
