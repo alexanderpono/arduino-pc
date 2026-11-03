@@ -26,16 +26,26 @@ const defaultWS: IWebSocket = {
     }
 };
 
+const MAX_GR_X = 119;
+const MAX_GR_Y = 39;
 export class AppController implements AppControllerForUI {
     private myWs: IWebSocket = defaultWS;
     private appSTM: AppStateManager;
     private vgaDeviceId: string;
     private kbDeviceId: string;
+    private mouseDeviceId: string;
+    private isMouseReady: boolean;
+    private mouseX: number;
+    private mouseY: number;
 
     constructor() {
         this.appSTM = AppStateManager.create();
         this.vgaDeviceId = '';
         this.kbDeviceId = '';
+        this.mouseDeviceId = '';
+        this.isMouseReady = false;
+        this.mouseX = 0;
+        this.mouseY = 0;
     }
 
     onAppMount = () => {
@@ -65,15 +75,47 @@ export class AppController implements AppControllerForUI {
             this.kbDeviceId = newDevice.id;
             this.onKBReady();
         }
+        if (newDevice.type === 'MOUSE') {
+            this.isMouseReady = true;
+            this.mouseDeviceId = newDevice.id;
+            this.onMouseReady();
+        }
     };
 
     onVGAReady = () => {
         console.log('onVGAReady()');
-        this.wsSendToVGA('Message to VGA');
+        const appState = this.appSTM.getApp();
+        if (appState.isKbReady && appState.isVgaReady && this.isMouseReady) {
+            this.onDevicesReady();
+        }
     };
 
     onKBReady = () => {
         console.log('onKBReady()');
+        const appState = this.appSTM.getApp();
+        if (appState.isKbReady && appState.isVgaReady && this.isMouseReady) {
+            this.onDevicesReady();
+        }
+    };
+
+    onMouseReady = () => {
+        console.log('onMouseReady()');
+        const appState = this.appSTM.getApp();
+        if (appState.isKbReady && appState.isVgaReady && this.isMouseReady) {
+            this.onDevicesReady();
+        }
+    };
+
+    moveGrCursorTo = (x: number, y: number) => {
+        this.wsSendToVGA(`\\gcp${x},${y};`);
+    };
+
+    onDevicesReady = () => {
+        console.log('onDevicesReady()');
+        this.mouseX = 60;
+        this.mouseY = 20;
+        this.moveGrCursorTo(this.mouseX, this.mouseY);
+        this.wsSendToVGA(`\\b1`);
     };
 
     onWsMessage = (message: WsMessage) => {
@@ -134,6 +176,37 @@ export class AppController implements AppControllerForUI {
 
                 default:
                     this.wsSendToVGA(keyboardInput);
+            }
+        }
+
+        if (prefix === this.mouseDeviceId) {
+            const mouseInput = msgData
+                .substring(colonPos + 1)
+                .trim()
+                .split(';')
+                .join('')
+                .split(',');
+            if (mouseInput[0] === 'MOVE') {
+                const dx = parseInt(mouseInput[1]);
+                const dy = parseInt(mouseInput[2]);
+                if (isNaN(dx) || isNaN(dy)) {
+                    return;
+                }
+                this.mouseX += dx;
+                this.mouseY -= dy;
+                if (this.mouseX < 0) {
+                    this.mouseX = 0;
+                }
+                if (this.mouseY < 0) {
+                    this.mouseY = 0;
+                }
+                if (this.mouseX > MAX_GR_X) {
+                    this.mouseX = MAX_GR_X;
+                }
+                if (this.mouseY > MAX_GR_Y) {
+                    this.mouseY = MAX_GR_Y;
+                }
+                this.moveGrCursorTo(this.mouseX, this.mouseY);
             }
         }
     };

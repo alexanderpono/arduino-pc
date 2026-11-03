@@ -65,12 +65,38 @@ void TextScreen::renderGrCursor()
     }
 
     vga.putpixel(grCursorX,grCursorY,inverse(vga.getpixel(grCursorX,grCursorY)));
-    vga.putpixel(grCursorX,grCursorY+1,inverse(vga.getpixel(grCursorX,grCursorY+1)));
-    vga.putpixel(grCursorX,grCursorY+2,inverse(vga.getpixel(grCursorX,grCursorY+2)));
-    vga.putpixel(grCursorX+1,grCursorY,inverse(vga.getpixel(grCursorX+1,grCursorY)));
-    vga.putpixel(grCursorX+2,grCursorY,inverse(vga.getpixel(grCursorX+2,grCursorY)));
-    vga.putpixel(grCursorX+1,grCursorY+1,inverse(vga.getpixel(grCursorX+1,grCursorY+1)));
-    vga.putpixel(grCursorX+2,grCursorY+2,inverse(vga.getpixel(grCursorX+2,grCursorY+2)));
+
+    if (((grCursorY + 1) < VGAX_HEIGHT) && ((grCursorX) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX,grCursorY+1,inverse(vga.getpixel(grCursorX,grCursorY+1)));
+    }
+
+
+    if (((grCursorY + 2) < VGAX_HEIGHT) && ((grCursorX) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX,grCursorY+2,inverse(vga.getpixel(grCursorX,grCursorY+2)));
+    }
+
+    if (((grCursorY) < VGAX_HEIGHT) && ((grCursorX+1) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX+1,grCursorY,inverse(vga.getpixel(grCursorX+1,grCursorY)));
+    }
+
+    if (((grCursorY) < VGAX_HEIGHT) && ((grCursorX+2) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX+2,grCursorY,inverse(vga.getpixel(grCursorX+2,grCursorY)));
+    }
+
+    if (((grCursorY+1) < VGAX_HEIGHT) && ((grCursorX+1) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX+1,grCursorY+1,inverse(vga.getpixel(grCursorX+1,grCursorY+1)));
+    }
+
+
+    if (((grCursorY+2) < VGAX_HEIGHT) && ((grCursorX+2) < VGAX_WIDTH))
+    {
+        vga.putpixel(grCursorX+2,grCursorY+2,inverse(vga.getpixel(grCursorX+2,grCursorY+2)));
+    }
 
     if ((flags & IS_GR_CURSOR_VISIBLE) == IS_GR_CURSOR_VISIBLE) {
         flags = flags & NOT_IS_GR_CURSOR_VISIBLE;
