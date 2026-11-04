@@ -151,11 +151,11 @@ void setup() {
 //  graph.draw_rect(0,0,17,10,YELLOW,GREEN);
 //  graph.draw_rect(0,0,66,37,YELLOW,GREEN);
 //  screen.screenTargetXY(1,1);
-  screen.windowWH(13,5);
+//  screen.windowWH(13,5);
   screen.setColor(RED);
-  String topLine    = "0000000000000";
-  String middleLine = "0           0";
-  String line3      = "1234567890123";
+//  String topLine    = "0000000000000";
+//  String middleLine = "0           0";
+//  String line3      = "1234567890123";
 //  screen.print("A");
 //  screen.moveCursorTo(0,0);
 //  screen.print(topLine);

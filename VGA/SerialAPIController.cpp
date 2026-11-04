@@ -43,6 +43,8 @@ int tickReading;
 #define BACK_SLASH_GR_BOX_Y1 24
 #define BACK_SLASH_GR_BOX_COLOR1 25
 #define BACK_SLASH_GR_BOX_COLOR2 26
+#define BACK_SLASH_WIN_WIDTH 27
+#define BACK_SLASH_WIN_HEIGHT 28
 
 
 
@@ -410,12 +412,44 @@ void SerialAPIController::processSerialInputsUsingTick()
                 prepareParseNumber(',');
                 break;
 
+            case 's':
+                state = BACK_SLASH_WIN_WIDTH;
+                prepareParseNumber(',');
+                break;
+                
             default:
                 Serial.print(F("unsupported command: '\\w"));
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;
                 break;
+            }
+        } else if (state == BACK_SLASH_WIN_WIDTH) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_WIN_HEIGHT;
+                param1 = numberParseResult;
+                prepareParseNumber(';');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\ws"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_WIN_HEIGHT) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = WORKING;
+                screen.windowWH(param1, numberParseResult);
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\ws"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
             }
         } else if (state == BACK_SLASH_WIN_POSX) {
             byte parseCode = parseNumber();

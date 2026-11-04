@@ -118,7 +118,11 @@ export class AppController implements AppControllerForUI {
         this.wsSendToVGA(`\\gco0`);
         this.wsSendToVGA(`\\tco0`);
         this.wsSendToVGA(`\\cl`);
-        this.wsSendToVGA(`\\wp1,1;`);
+        this.wsSendToVGA(`\\b1`);
+        this.wsSendToVGA(`\\c2`);
+        this.wsSendToVGA(`\\wp50,1;`);
+        this.wsSendToVGA(`\\ws14,6;`);
+        this.wsSendToVGA(`\\gb49,0,70,39,3,1;`);
         this.wsSendToVGA(`\\gb0,9,10,10,1,2;`);
         this.wsSendToVGA(`\\gb10,9,10,10,1,2;`);
         this.wsSendToVGA(`\\gb20,9,10,10,1,2;`);
@@ -134,7 +138,7 @@ export class AppController implements AppControllerForUI {
         setTimeout(() => {
             this.wsSendToVGA(`\\gco1`);
             this.wsSendToVGA(`\\tco1`);
-            this.wsSendToVGA(`10 PRINT A`);
+            this.wsSendToVGA(`10 PRINT A\\n`);
         }, 1000);
     };
 

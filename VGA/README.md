@@ -21,6 +21,7 @@ Baud rate 9600
 \b[0..3] - set bg color 0/1/2/3. Example: \b0
 \cl - clear screen
 \wp255,255; - set text window position at pixels (x 0..159, y 0..40)
+\ws255,255; - set text window size at chars (x 0..23, y 0..9)
 \dt - get device type
 \di - get device ID
 \dv - get device version
