@@ -36,8 +36,8 @@ Baud rate 9600
 \gco0 - turn graphics cursor off
 \gco1 - turn graphics cursor on
 \gcp255,255; - set graphics cursor position (x 0..159, y 0..40)
-
 \gb255,255,255,255,3,3; - draw box x,y , w,h, borderColor, bgColor
+\gpN  - draw a picture from flash memory (N 0..9)
 
 ```
 

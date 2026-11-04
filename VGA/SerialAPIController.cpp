@@ -2,6 +2,7 @@
 #include "SerialAPIController.h"
 #include "TextScreen.h"
 #include "VGAXUtils.h"
+#include "pictures.h"
 
 #define KB_ENTER 13
 #define KB_ESC 27
@@ -13,6 +14,7 @@ boolean isReadingFromSerial = false;
 byte myNumber;
 extern TextScreen screen;
 extern VGAXUtils graph;
+extern VGAX vga;
 
 int tickReading;
 #define MAX_TICK_READING 10000
@@ -45,6 +47,7 @@ int tickReading;
 #define BACK_SLASH_GR_BOX_COLOR2 26
 #define BACK_SLASH_WIN_WIDTH 27
 #define BACK_SLASH_WIN_HEIGHT 28
+#define BACK_SLASH_GR_DRAW_PIC 29
 
 
 
@@ -664,8 +667,32 @@ void SerialAPIController::processSerialInputsUsingTick()
                 prepareParseNumber(',');
                 break;
 
+            case 'p':
+                state = BACK_SLASH_GR_DRAW_PIC;
+                break;
+
             default:
                 Serial.print(F("syntax error: '\\gc"));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+                break;
+            }
+        } else if (state == BACK_SLASH_GR_DRAW_PIC) {
+            switch (myNumber)
+            {
+            case '0':
+                state = WORKING;
+                vga.copy((byte*)img_guyelaine_data);
+                break;
+
+            case '1':
+                state = WORKING;
+                vga.copy((byte*)img_pirate_data);
+                break;
+
+            default:
+                Serial.print(F("unknown picture ID: '\\gp"));
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;
