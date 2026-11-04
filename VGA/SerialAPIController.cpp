@@ -1,6 +1,7 @@
 #include "VGAX.h"
 #include "SerialAPIController.h"
 #include "TextScreen.h"
+#include "VGAXUtils.h"
 
 #define KB_ENTER 13
 #define KB_ESC 27
@@ -11,6 +12,8 @@
 boolean isReadingFromSerial = false;
 byte myNumber;
 extern TextScreen screen;
+extern VGAXUtils graph;
+
 int tickReading;
 #define MAX_TICK_READING 10000
 
@@ -34,6 +37,14 @@ int tickReading;
 #define BACK_SLASH_GR_CURSOR_ON 18
 #define BACK_SLASH_GR_CURSOR_POSX 19
 #define BACK_SLASH_GR_CURSOR_POSY 20
+#define BACK_SLASH_GR_BOX_X0 21
+#define BACK_SLASH_GR_BOX_Y0 22
+#define BACK_SLASH_GR_BOX_X1 23
+#define BACK_SLASH_GR_BOX_Y1 24
+#define BACK_SLASH_GR_BOX_COLOR1 25
+#define BACK_SLASH_GR_BOX_COLOR2 26
+
+
 
 #define NUMBER_9 2
 #define NUMBER_2 3
@@ -49,6 +60,10 @@ byte numberParseState = WORKING;
 byte numberParseResult = 0;
 byte numberParseGoodFinish = ',';
 byte param1 = 0;
+byte param2 = 0;
+byte param3 = 0;
+byte param4 = 0;
+byte param5 = 0;
 
 static const unsigned char UNSUPPORTED_COMMAND[]            PROGMEM = "unsupported command: '\\";
 
@@ -610,12 +625,100 @@ void SerialAPIController::processSerialInputsUsingTick()
                 state = BACK_SLASH_GR_CURSOR;
                 break;
 
+            case 'b':
+                state = BACK_SLASH_GR_BOX_X0;
+                prepareParseNumber(',');
+                break;
+
             default:
                 Serial.print(F("syntax error: '\\gc"));
                 Serial.print(String((char)myNumber));
                 Serial.println("'");
                 state = WORKING;
                 break;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_X0) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_BOX_Y0;
+                param1 = numberParseResult;
+                prepareParseNumber(',');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_Y0) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_BOX_X1;
+                param2 = numberParseResult;
+                prepareParseNumber(',');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX,Y"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_X1) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_BOX_Y1;
+                param3 = numberParseResult;
+                prepareParseNumber(',');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX,Y,X"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_Y1) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_BOX_COLOR1;
+                param4 = numberParseResult;
+                prepareParseNumber(',');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX,Y,X"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_COLOR1) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = BACK_SLASH_GR_BOX_COLOR2;
+                param5 = numberParseResult;
+                prepareParseNumber(';');
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX,Y,X,Y"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
+            }
+        } else if (state == BACK_SLASH_GR_BOX_COLOR2) {
+            byte parseCode = parseNumber();
+            if (parseCode == PARSE_SUCCESS) {
+                state = WORKING;
+                graph.draw_rect(param1,param2,param3,param4,param5,numberParseResult);
+            }
+            if (parseCode == PARSE_ERROR) {
+                Serial.print(F("syntax error: '\\gbX,Y,X,Y,C,"));
+                Serial.print(String(numberParseResult));
+                Serial.print(String((char)myNumber));
+                Serial.println("'");
+                state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_CURSOR) {
             switch (myNumber)

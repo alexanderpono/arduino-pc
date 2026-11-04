@@ -115,7 +115,27 @@ export class AppController implements AppControllerForUI {
         this.mouseX = 60;
         this.mouseY = 20;
         this.moveGrCursorTo(this.mouseX, this.mouseY);
-        this.wsSendToVGA(`\\b1`);
+        this.wsSendToVGA(`\\gco0`);
+        this.wsSendToVGA(`\\tco0`);
+        this.wsSendToVGA(`\\cl`);
+        this.wsSendToVGA(`\\wp1,1;`);
+        this.wsSendToVGA(`\\gb0,9,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb10,9,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb20,9,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb30,9,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb0,19,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb10,19,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb20,19,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb30,19,10,10,1,2;`);
+        this.wsSendToVGA(`\\gb0,29,10,10,3,2;`);
+        this.wsSendToVGA(`\\gb10,29,10,10,3,2;`);
+        this.wsSendToVGA(`\\gb20,29,10,10,3,2;`);
+        this.wsSendToVGA(`\\gb30,29,10,10,3,2;`);
+        setTimeout(() => {
+            this.wsSendToVGA(`\\gco1`);
+            this.wsSendToVGA(`\\tco1`);
+            this.wsSendToVGA(`10 PRINT A`);
+        }, 1000);
     };
 
     onWsMessage = (message: WsMessage) => {

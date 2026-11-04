@@ -31,10 +31,13 @@ Baud rate 9600
 \tci1 - set text cursor uses color/background color
 \tcl0 - set text cursor is small
 \tcl1 - set text cursor is large (only for inversed cursor)
-\tcp255,255; - set text cussor position at chars (x 0..24 y 0..10)
+\tcp255,255; - set text cursor position at chars (x 0..24 y 0..10)
 \gco0 - turn graphics cursor off
 \gco1 - turn graphics cursor on
 \gcp255,255; - set graphics cursor position (x 0..159, y 0..40)
+
+\gb255,255,255,255,3,3; - draw box x,y , w,h, borderColor, bgColor
+
 ```
 
 ## Example

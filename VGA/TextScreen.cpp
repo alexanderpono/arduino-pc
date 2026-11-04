@@ -17,7 +17,7 @@ byte TextScreen::windowH = TXT_SCREEN_H;
 byte TextScreen::colorMain = COLOR_1;
 byte TextScreen::bgColor = COLOR_BLACK;
 byte textTmp;
-byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED | IS_GR_CURSOR_ON;
+byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED;
 
 void TextScreen::clearTextCursor()
 {
