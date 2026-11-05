@@ -123,7 +123,7 @@ export class AppController implements AppControllerForUI {
         this.wsSendToVGA(`\\c2`);
         this.wsSendToVGA(`\\wp1,1;`);
         this.wsSendToVGA(`\\ws12,4;`);
-        this.wsSendToVGA(`\\gb0,0,60,25,3,1;`);
+        this.wsSendToVGA(`\\gb0,0,61,25,3,1;`);
         // this.wsSendToVGA(`\\gb0,9,10,10,1,2;`);
         // this.wsSendToVGA(`\\gb10,9,10,10,1,2;`);
         // this.wsSendToVGA(`\\gb20,9,10,10,1,2;`);

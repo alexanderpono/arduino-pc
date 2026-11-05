@@ -4,7 +4,7 @@
 #if defined(ATMEGA2560_HIGHRES)
     #define TXT_SCREEN_H 13
 #elif defined(VGAX_2BPP_SERIAL_API)
-    #define TXT_SCREEN_H 6
+    #define TXT_SCREEN_H 8
 #else
     #define TXT_SCREEN_H 10
 #endif
@@ -19,11 +19,12 @@
 #define YELLOW COLOR_3
 #define BLACK COLOR_BLACK
 
+#define FNT_NANOFONT_WIDTH 5
+
+
 void vgaPrintAscii(byte number, byte x, byte y, byte color);
 extern VGAX vga;
 
-#define IS_INITIAL_DRAW 1
-#define NOT_IS_INITIAL_DRAW 254
 #define IS_TEXT_CURSOR_VISIBLE 2
 #define NOT_IS_TEXT_CURSOR_VISIBLE 253
 #define IS_TEXT_CURSOR_ON 4
@@ -47,9 +48,6 @@ public:
     static void printChar(byte textX, byte textY, byte ch);
     static void clearTextCursor();
     static void clearChar(byte textX, byte textY, byte ch);
-    static void dump();
-    static byte getCharAt(byte x, byte y);
-    static void setCharAt(byte x, byte y, byte ch);
     static void print(String s);
     static void println(String s);
     static void moveCursorTo(byte x, byte y);
@@ -79,6 +77,7 @@ public:
     static void disableGrCursor();
     static void enableGrCursor();
     static void moveGrCursorTo(byte x, byte y);
+    
     
     
 
@@ -111,6 +110,8 @@ public:
         vga.putpixel(x,y,inverse(vga.getpixel(x,y)));
         return;
     }
+    static void grClearChar(byte grX, byte grY);
+    static void grCopyScreenArea(byte srcX, byte srcY, byte w, byte h, byte targetX, byte targetY);
 
     static byte windowW;
     static byte windowH;

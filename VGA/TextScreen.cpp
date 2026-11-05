@@ -2,8 +2,6 @@
 #include "TextScreen.h"
 #include "VGAx-utils.h"
 
-unsigned char screenBuf[TXT_SCREEN_H][TXT_SCREEN_W];
-unsigned char atScreen[TXT_SCREEN_H][TXT_SCREEN_W];
 unsigned int counter = 0; 
 
 byte TextScreen::cursorX = 0;
@@ -17,7 +15,7 @@ byte TextScreen::windowH = TXT_SCREEN_H;
 byte TextScreen::colorMain = COLOR_1;
 byte TextScreen::bgColor = COLOR_BLACK;
 byte textTmp;
-byte TextScreen::flags = IS_INITIAL_DRAW | IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED;
+byte TextScreen::flags = IS_TEXT_CURSOR_ON | IS_TEXT_CURSOR_INVERSED;
 
 void TextScreen::clearTextCursor()
 {
@@ -161,45 +159,6 @@ void TextScreen::clearChar(byte textX, byte textY, byte ch)
     vgaPrintAscii(ch, screenX, screenY, bgColor);
 }
 
-void TextScreen::dump()
-{
-    byte textX = 0;
-    byte textY = 0;
-    byte newVal;
-    byte oldVal;
-
-    for (textY = 0; textY < windowH; textY++)
-    {
-        for (textX = 0; textX < windowW; textX++)
-        {
-            newVal = screenBuf[textY][textX];
-
-            if ((TextScreen::flags & IS_INITIAL_DRAW) == 0)
-            {
-                oldVal = atScreen[textY][textX];
-                if (newVal != oldVal)
-                {
-                    clearChar(textX, textY, oldVal);
-                    printChar(textX, textY, newVal);
-                    atScreen[textY][textX] = newVal;
-                }
-            }
-            else
-            {
-                printChar(textX, textY, newVal);
-                atScreen[textY][textX] = newVal;
-            }
-        }
-    }
-
-    flags = flags & NOT_IS_INITIAL_DRAW;
-}
-
-void TextScreen::setCharAt(byte x, byte y, byte ch)
-{
-    screenBuf[y][x] = ch;
-}
-
 void TextScreen::print(String s)
 {
     clearTextCursor();
@@ -207,7 +166,7 @@ void TextScreen::print(String s)
     {
         if (cursorX < windowW)
         {
-            setCharAt(cursorX, cursorY, s.charAt(i));
+            printChar(cursorX, cursorY, s.charAt(i));
             cursorX++;
             if (cursorX >= windowW)
             {
@@ -256,24 +215,7 @@ void TextScreen::cls()
 {
     cursorX = 0;
     cursorY = 0;
-    clearBuffer();
     vgaClear();
-}
-
-void TextScreen::clearBuffer()
-{
-    unsigned char x;
-    unsigned char y;
-    byte val = ' ';
-
-    for (y = 0; y < windowH; y++)
-    {
-        for (x = 0; x < windowW; x++)
-        {
-            setCharAt(x, y, val);
-            atScreen[y][x] = val;
-        }
-    }
 }
 
 void TextScreen::clearAt(byte textX, byte textY) 
@@ -289,7 +231,7 @@ void TextScreen::printAt(byte x, byte y, String s)
     {
         if (curX < windowW)
         {
-            setCharAt(curX, curY, s.charAt(i));
+            printChar(curX, curY, s.charAt(i));
             curX++;
             if (curX >= windowW)
             {
@@ -332,47 +274,72 @@ void TextScreen::setBgColor(byte color)
    bgColor = color;
 }
 
-void TextScreen::scrollUp()
+void TextScreen::grCopyScreenArea(byte srcX, byte srcY, byte w, byte h, byte targetX, byte targetY)
 {
-    unsigned char x;
-    unsigned char y;
-    byte val = ' ';
-
-    for (y = 1; y < windowH; y++) //
+    byte x;
+    byte y;
+    byte lastX = srcX + w;
+    byte lastY = srcY + h;
+    byte tx;
+    byte ty;
+    for (y = srcY, ty = targetY; y < lastY; y++, ty++)
     {
-        byte *destLine = &screenBuf[y-1][0];
-        byte *srcLine = &screenBuf[y][0];
-
-        byte *dest = destLine;
-        byte *src = srcLine;
-        for (x = 0; x < windowW; x++)
+        for (x = srcX, tx = targetX; x < lastX; x++, tx++)
         {
-            *dest = *src;
-            dest++;
-            src++;
+            vga.putpixel(tx, ty, vga.getpixel(x, y));
         }
-    }
-
-    for (x = 0; x < windowW; x++)
-    {
-        setCharAt(x, windowH - 1, val);
     }
 }
 
-byte TextScreen::getCharAt(byte x, byte y) {
-    return screenBuf[y][x];
+
+void TextScreen::scrollUp()
+{
+    clearTextCursor();
+    clearGrCursor();
+
+    grCopyScreenArea(
+        screenTargetX, 
+        screenTargetY + FNT_NANOFONT_HEIGHT, 
+        windowW * FNT_NANOFONT_WIDTH, 
+        FNT_NANOFONT_HEIGHT * (windowH-1), 
+        screenTargetX, 
+        screenTargetY);
+
+    byte x, y;
+    y = textYToScreenY(cursorY - 1);
+    for (x = 0; x < windowW; x++)
+    {
+        grClearChar(textXToScreenX(x), y);
+    }
+
+    cursorX = 0;
+    drawTextCursor();
 }
 
 void TextScreen::returnCaret() {
   cursorX = 0;  
 }
 
+void TextScreen::grClearChar(byte grX, byte grY)
+{
+    byte x;
+    byte y;
+    for (y = grY; y < grY + FNT_NANOFONT_HEIGHT; y++)
+    {
+        for (x = grX; x < grX + FNT_NANOFONT_WIDTH; x++)
+        {
+            vga.putpixel(x, y, bgColor);
+        }
+    }
+}
+
+
+
 void TextScreen::backspace() {
     if (cursorX > 0) {
         cursorX--;
-        textTmp = getCharAt(cursorX, cursorY);
-        clearChar(cursorX, cursorY, textTmp);
-        moveCursorTo(cursorX, cursorY);
+        bgColor = COLOR_1;
+        grClearChar(textXToScreenX(cursorX), textYToScreenY(cursorY));
     }
 }
 

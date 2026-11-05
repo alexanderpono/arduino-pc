@@ -42,7 +42,7 @@ HERE you can find some inline documentation about the VGAX library class
 #elif defined(__AVR_ATmega2560__) && defined(ATMEGA2560_HIGHRES)
   #define VGAX_HEIGHT 80 //number of lines
 #elif defined(VGAX_2BPP_SERIAL_API)
-  #define VGAX_HEIGHT 40 //number of lines
+  #define VGAX_HEIGHT 53 //number of lines
 #else
   #define VGAX_HEIGHT 60 //number of lines
 #endif

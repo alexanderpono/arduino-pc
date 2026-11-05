@@ -1,7 +1,6 @@
 #include "VGAX.h"
 #include "VGAx-utils.h"
 
-#define FNT_NANOFONT_HEIGHT 6
 #define FNT_NANOFONT_SYMBOLS_COUNT 95
 
 extern VGAX vga;

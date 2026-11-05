@@ -88,7 +88,7 @@ void VGAX::printPROGMEM(byte *fnt, byte glyphscount, byte fntheight,
 void VGAX::printSRAM(byte *fnt, byte glyphscount, byte fntheight, byte hspace, 
                      byte vspace, const char *str, char dx, char dy0, 
                      byte color) {
-  char dx0=dx, dy;
+  char dx0=dx;
   char *pstr=(char*)str;
   char c;
   while (c=*pstr++) {

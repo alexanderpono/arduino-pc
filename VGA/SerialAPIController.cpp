@@ -11,7 +11,6 @@
 #define KB_DEL 127
 
 boolean isReadingFromSerial = false;
-byte myNumber;
 extern TextScreen screen;
 extern VGAXUtils graph;
 extern VGAX vga;
@@ -61,6 +60,7 @@ int tickReading;
 #define PARSE_SUCCESS 1
 
 byte SerialAPIController::state = WORKING;
+byte myNumber;
 byte numberParseState = WORKING;
 byte numberParseResult = 0;
 byte numberParseGoodFinish = ',';
@@ -69,8 +69,6 @@ byte param2 = 0;
 byte param3 = 0;
 byte param4 = 0;
 byte param5 = 0;
-
-static const unsigned char UNSUPPORTED_COMMAND[]            PROGMEM = "unsupported command: '\\";
 
 void prepareParseNumber(byte goodFinish) {
     numberParseState = WORKING;
@@ -208,12 +206,6 @@ byte parseNumber() {
     return PARSE_IN_PROGRESS;
 }
 
-void printmsg(const unsigned char *msg) {
-  while (pgm_read_byte(msg) != 0) {
-      Serial.print(pgm_read_byte(msg++));
-  }
-}
-
 void SerialAPIController::processSerialInputsUsingTick()
 {
     if (Serial.available() > 0)
@@ -228,7 +220,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             switch (myNumber)
             {
             case KB_SPACE:
-                screen.print(" ");
+                screen.print(F(" "));
                 break;
     
             case '\\':
@@ -259,7 +251,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 break;
 
             case '\\':
-                screen.print("\\");
+                screen.print(F("\\"));
                 state = WORKING;
                 break;
 
@@ -319,7 +311,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unsupported command: '\\"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
 
                 break;
@@ -329,25 +321,21 @@ void SerialAPIController::processSerialInputsUsingTick()
             switch (myNumber)
             {
             case '1':
-                screen.dump();
                 screen.setColor(COLOR_1);
                 state = WORKING;
                 break;
 
             case '2':
-                screen.dump();
                 screen.setColor(COLOR_2);
                 state = WORKING;
                 break;
 
             case '3':
-                screen.dump();
                 screen.setColor(COLOR_3);
                 state = WORKING;
                 break;
 
             case '0':
-                screen.dump();
                 screen.setColor(COLOR_BLACK);
                 state = WORKING;
                 break;
@@ -360,7 +348,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unsupported command: '\\c"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
 
                 break;
@@ -370,25 +358,21 @@ void SerialAPIController::processSerialInputsUsingTick()
             switch (myNumber)
             {
             case '1':
-                screen.dump();
                 screen.setBgColor(COLOR_1);
                 state = WORKING;
                 break;
 
             case '2':
-                screen.dump();
                 screen.setBgColor(COLOR_2);
                 state = WORKING;
                 break;
 
             case '3':
-                screen.dump();
                 screen.setBgColor(COLOR_3);
                 state = WORKING;
                 break;
 
             case '0':
-                screen.dump();
                 screen.setBgColor(COLOR_BLACK);
                 state = WORKING;
                 break;
@@ -401,7 +385,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unsupported command: '\\b"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
 
                 break;
@@ -423,7 +407,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unsupported command: '\\w"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -438,7 +422,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\ws"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_WIN_HEIGHT) {
@@ -451,7 +435,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\ws"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_WIN_POSX) {
@@ -465,7 +449,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_WIN_POSY) {
@@ -477,10 +461,10 @@ void SerialAPIController::processSerialInputsUsingTick()
             if (parseCode == PARSE_ERROR) {
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String(param1));
-                Serial.print(",");
+                Serial.print(F(","));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_DEVICE) {
@@ -521,7 +505,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unsupported command: '\\d"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -535,7 +519,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -562,7 +546,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -582,7 +566,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -602,7 +586,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -622,7 +606,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -637,7 +621,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_CURSOR_POSY) {
@@ -649,10 +633,10 @@ void SerialAPIController::processSerialInputsUsingTick()
             if (parseCode == PARSE_ERROR) {
                 Serial.print(F("syntax error: '\\wp"));
                 Serial.print(String(param1));
-                Serial.print(",");
+                Serial.print(F(","));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR) {
@@ -674,7 +658,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\gc"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -694,7 +678,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("unknown picture ID: '\\gp"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -709,7 +693,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_BOX_Y0) {
@@ -723,7 +707,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX,Y"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_BOX_X1) {
@@ -737,7 +721,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX,Y,X"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_BOX_Y1) {
@@ -751,7 +735,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX,Y,X"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_BOX_COLOR1) {
@@ -765,7 +749,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX,Y,X,Y"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_BOX_COLOR2) {
@@ -778,7 +762,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gbX,Y,X,Y,C,"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_CURSOR) {
@@ -796,7 +780,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\gc"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -811,7 +795,7 @@ void SerialAPIController::processSerialInputsUsingTick()
                 Serial.print(F("syntax error: '\\gcp"));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_CURSOR_POSY) {
@@ -823,10 +807,10 @@ void SerialAPIController::processSerialInputsUsingTick()
             if (parseCode == PARSE_ERROR) {
                 Serial.print(F("syntax error: '\\gcp"));
                 Serial.print(String(param1));
-                Serial.print(",");
+                Serial.print(F(","));
                 Serial.print(String(numberParseResult));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
             }
         } else if (state == BACK_SLASH_GR_CURSOR_ON) {
@@ -845,7 +829,7 @@ void SerialAPIController::processSerialInputsUsingTick()
             default:
                 Serial.print(F("syntax error: '\\gc"));
                 Serial.print(String((char)myNumber));
-                Serial.println("'");
+                Serial.println(F("'"));
                 state = WORKING;
                 break;
             }
@@ -860,7 +844,6 @@ void SerialAPIController::processSerialInputsUsingTick()
             if (tickReading >= MAX_TICK_READING) {
               tickReading = 0;
               isReadingFromSerial = false;
-              screen.dump();
             }
         }
     }
